@@ -3,6 +3,8 @@ import logging
 from pathlib import Path
 import re
 from typing import Any, Dict, Optional
+import tempfile
+import uuid
 
 # Third-Party Libraries
 import fitz
@@ -73,16 +75,10 @@ def choose_publisher(
     return None
 
 
-def save_pdf(
-    doc: fitz.Document, out_file: Path, debug: bool = False, dry_run: bool = False
-) -> None:
+def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
     """Save the document to the output file."""
-    if dry_run:
-        logging.warn("Dry run: not saving file")
-        return
-
     if debug:
-        logging.warn("Saving unoptimized (debug) file to %s", out_file)
+        logging.debug("Saving unoptimized (debug) file to %s", out_file)
         doc.save(
             out_file,
             ascii=True,
@@ -94,7 +90,7 @@ def save_pdf(
             pretty=True,
         )
     else:
-        logging.info("Saving optimized file to %s", out_file)
+        logging.debug("Saving optimized file to %s", out_file)
         doc.scrub()
         doc.save(
             out_file,
@@ -119,67 +115,73 @@ def process(
     logging.debug(
         "%s sources found: %s", len(config["sources"]), ", ".join(config["sources"])
     )
-    # loop through sources
-    for source_name, source in config["sources"].items():
-        logging.info("Processing source: %s", source_name)
-        in_path = Path(source["in_path"])
-        out_path = Path(source["out_path"])
-        out_suffix = source.get("out_suffix", "")
-        # verify that both paths exist
-        if not in_path.exists():
-            logging.error("Input path does not exist: %s", in_path)
-            continue
-        if not out_path.exists():
-            logging.error("Output path does not exist: %s", out_path)
-            continue
-        # determine which publishers are in scope for this source
-        publishers = select_publishers(source, config["publishers"])
-        # recursively process the input path
-        for in_file in in_path.glob("**/*.pdf"):
-            logging.info("Processing file: %s", in_file)
-            # calculate the output path for the file
-            out_file = out_path / in_file.relative_to(in_path).with_stem(
-                in_file.stem + out_suffix
-            )
-            logging.info("Output file:     %s", out_file)
-            # create the output directory if it doesn't exist
-            out_file.parent.mkdir(parents=True, exist_ok=True)
-
-            # if the out_file already exists and it's newer than the in_file, skip it
-            if out_file.exists() and out_file.stat().st_mtime > in_file.stat().st_mtime:
-                logging.info("Output file is already up to date")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir: Path = Path(temp_dir)
+        # loop through sources
+        for source_name, source in config["sources"].items():
+            logging.info("Processing source: %s", source_name)
+            in_path = Path(source["in_path"])
+            out_path = Path(source["out_path"])
+            out_suffix = source.get("out_suffix", "")
+            # verify that both paths exist
+            if not in_path.exists():
+                logging.error("Input path does not exist: %s", in_path)
                 continue
-            # process the file
-            with fitz.open(in_file) as doc:
-                if doc.is_encrypted:
-                    logging.info("Password required for %s", in_file)
-                    if not do_authentication(doc, publishers):
-                        logging.warn("Skipping file since no password found")
-                        continue
-                # Check metadata to determine publisher
-                logging.debug("Metadata: %s", doc.metadata)
-                if not (publisher := choose_publisher(doc, publishers)):
-                    logging.warn("Skipping file since no publisher found")
+            if not out_path.exists():
+                logging.error("Output path does not exist: %s", out_path)
+                continue
+            # determine which publishers are in scope for this source
+            publishers = select_publishers(source, config["publishers"])
+            # recursively process the input path
+            for in_file in in_path.glob("**/*.pdf"):
+                logging.info("Processing file: %s", in_file)
+                # calculate the output path for the file
+                out_file = out_path / in_file.relative_to(in_path).with_stem(
+                    in_file.stem + out_suffix
+                )
+                logging.info("Output file:     %s", out_file)
+                # create the output directory if it doesn't exist
+                out_file.parent.mkdir(parents=True, exist_ok=True)
+
+                # if the out_file already exists and it's newer than the in_file, skip it
+                if (
+                    out_file.exists()
+                    and out_file.stat().st_mtime > in_file.stat().st_mtime
+                ):
+                    logging.info("Output file is already up to date")
                     continue
-
-                # Get the list of plans for this publisher
-                plan_names = publisher.get("plans", [])
-                for plan_name in plan_names:
-                    if not (plan := config["plans"].get(plan_name)):
-                        logging.warn('Skipping unknown plan "%s"', plan_name)
+                # Create a temporary file to save the output
+                temp_out_file: Path = temp_dir / (str(uuid.uuid4()) + ".pdf")
+                # process the file
+                with fitz.open(in_file) as doc:
+                    if doc.is_encrypted:
+                        logging.info("Password required for %s", in_file)
+                        if not do_authentication(doc, publishers):
+                            logging.warn("Skipping file since no password found")
+                            continue
+                    # Check metadata to determine publisher
+                    logging.debug("Metadata: %s", doc.metadata)
+                    if not (publisher := choose_publisher(doc, publishers)):
+                        logging.warn("Skipping file since no publisher found")
                         continue
-                    if not (tech_function := tech_registry.get(plan["technique"])):
-                        logging.warn('Skipping unknown technique "%s"', plan)
-                        continue
-                    logging.info("Running plan: %s", plan_name)
-                    logging.info("Applying technique: %s", tech_function.nice_name)
-                    logging.debug(
-                        "Calling technique with: %s, %s", doc, plan.get("args", {})
-                    )
-                    tech_function.apply(doc=doc, **plan.get("args", {}))
 
-                if not dry_run:
-                    save_pdf(doc, out_file, debug=debug, dry_run=dry_run)
+                    # Get the list of plans for this publisher
+                    plan_names = publisher.get("plans", [])
+                    for plan_name in plan_names:
+                        if not (plan := config["plans"].get(plan_name)):
+                            logging.warn('Skipping unknown plan "%s"', plan_name)
+                            continue
+                        if not (tech_function := tech_registry.get(plan["technique"])):
+                            logging.warn('Skipping unknown technique "%s"', plan)
+                            continue
+                        logging.info("Running plan: %s", plan_name)
+                        logging.info("Applying technique: %s", tech_function.nice_name)
+                        logging.debug(
+                            "Calling technique with: %s, %s", doc, plan.get("args", {})
+                        )
+                        tech_function.apply(doc=doc, **plan.get("args", {}))
+
+                    save_pdf(doc, temp_out_file, debug=debug)
                     # loop through post-processors
                     for post_processor_name in source.get("post-process", []):
                         if not (
@@ -195,4 +197,10 @@ def process(
                         logging.info(
                             "Applying post-processor: %s", post_processor.nice_name
                         )
-                        post_processor.apply(in_path=in_file, out_path=out_file)
+                        post_processor.apply(in_path=in_file, out_path=temp_out_file)
+                    if dry_run:
+                        logging.warn("Dry run: not saving file %s", out_file)
+                        temp_out_file.unlink()
+                    else:
+                        logging.debug("Saving final output to %s", out_file)
+                        temp_out_file.replace(out_file)
