@@ -2,35 +2,46 @@
 import importlib
 from pathlib import Path
 import pkgutil
+from typing import Dict, Optional, Type, TypeVar
 
 # Project Libraries
-from pdf_access import TechniqueBase
+from . import NiceBase
 
-base_package_name = "pdf_access.techniques"
+T = TypeVar("T", bound=NiceBase)
 
 
-def discover_and_register_techniques() -> dict[str, TechniqueBase]:
-    technique_registry = {}
+def discover_and_register(
+    module: str, clazz: Type[T], base_path: Optional[Path] = None
+) -> Dict[str, Type[T]]:
+    registry: Dict[str, Type[T]] = {}
 
-    # Use the base package name directly for discovering modules
-    for _, module_name, _ in pkgutil.iter_modules(
-        [str(Path(__file__).parent / "techniques")]
-    ):
-        # Full module name includes the base package name
-        full_module_name = f"{base_package_name}.{module_name}"
-        module = importlib.import_module(full_module_name)
+    # Path to the directory containing modules
+    if base_path is None:
+        base_path = Path(__file__).resolve().parent
+    package_path = base_path / module.replace(".", "/")
+    package_name = module
+
+    # Discover and import modules
+    for _, module_name, _ in pkgutil.iter_modules([str(package_path)]):
+        full_module_name = f"{base_path.stem}.{package_name}.{module_name}"
+        mod = importlib.import_module(full_module_name)
 
         # Iterate through everything defined in the module
-        for name in dir(module):
-            obj = getattr(module, name)
-            if (
-                isinstance(obj, type)
-                and issubclass(obj, TechniqueBase)
-                and obj is not TechniqueBase
-            ):
-                # Found a subclass of TechniqueBase
+        for name in dir(mod):
+            obj = getattr(mod, name)
+            # Check if it's a class and a subclass of clazz, but not clazz itself
+            if isinstance(obj, type) and issubclass(obj, clazz) and obj is not clazz:
+                # Use a class attribute or a method to get a registration key
                 nice_name = obj.register()
                 if nice_name:
-                    technique_registry[nice_name] = obj
+                    if nice_name in registry:
+                        raise ValueError(
+                            f"Duplicate nice_name {nice_name} found in {module_name}"
+                        )
+                    registry[nice_name] = obj
+                else:
+                    raise ValueError(
+                        f"Class {obj} does not define a nice_name attribute or register method"
+                    )
 
-    return technique_registry
+    return registry

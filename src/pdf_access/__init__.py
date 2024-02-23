@@ -5,8 +5,14 @@
 # package_name.__version__, which is used to get version information about this
 # Python package.
 from ._version import __version__  # noqa: F401
-from .base_technique import TechniqueBase
+from .bases import NiceBase, PostProcessBase, TechniqueBase
 from .process import process
-from .registry import discover_and_register_techniques
+from .registry import discover_and_register
 
-__all__ = ["TechniqueBase", "process", "discover_and_register_techniques"]
+__all__ = [
+    "discover_and_register",
+    "NiceBase",
+    "PostProcessBase",
+    "process",
+    "TechniqueBase",
+]

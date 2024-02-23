@@ -10,7 +10,7 @@ import sys
 import tomllib
 from typing import Any, Dict
 
-from . import TechniqueBase, discover_and_register_techniques, process
+from . import PostProcessBase, TechniqueBase, discover_and_register, process
 from ._version import __version__
 
 
@@ -77,11 +77,25 @@ def main() -> None:
     # TODO verify the configuration schema
 
     # Discover and register the techniques
-    tech_registry: dict[str, TechniqueBase] = discover_and_register_techniques()
+    tech_registry: dict[str, TechniqueBase] = discover_and_register(
+        "techniques", TechniqueBase
+    )
     logging.debug("Techniques:\n%s", pp.pformat(tech_registry))
 
+    # Discover and register the post-processors
+    post_process_registry: dict[str, PostProcessBase] = discover_and_register(
+        "post_process", PostProcessBase
+    )
+    logging.debug("Post-processors:\n%s", pp.pformat(post_process_registry))
+
     # Process the PDF files
-    process(config, tech_registry, debug=args.debug, dry_run=args.dry_run)
+    process(
+        config,
+        tech_registry,
+        post_process_registry,
+        debug=args.debug,
+        dry_run=args.dry_run,
+    )
 
     # Stop logging and clean up
     logging.shutdown()

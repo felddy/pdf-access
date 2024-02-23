@@ -7,7 +7,7 @@ from typing import Any, Dict
 # Third-Party Libraries
 import fitz
 
-from . import TechniqueBase
+from . import PostProcessBase, TechniqueBase
 
 
 def do_authentication(doc: fitz.Document, publishers: Dict[str, Any]) -> bool:
@@ -106,6 +106,7 @@ def save_pdf(
 def process(
     config: Dict[str, Any],
     tech_registry: dict[str, TechniqueBase],
+    post_process_registry: dict[str, PostProcessBase],
     debug: bool = False,
     dry_run: bool = False,
 ) -> None:
@@ -174,3 +175,19 @@ def process(
 
                 if not dry_run:
                     save_pdf(doc, out_file, debug=debug, dry_run=dry_run)
+                    # loop through post-processors
+                    for post_processor_name in source.get("post-process", []):
+                        if not (
+                            post_processor := post_process_registry.get(
+                                post_processor_name
+                            )
+                        ):
+                            logging.warn(
+                                'Skipping unknown post-processor "%s"',
+                                post_processor_name,
+                            )
+                            continue
+                        logging.info(
+                            "Applying post-processor: %s", post_processor.nice_name
+                        )
+                        post_processor.apply(in_path=in_file, out_path=out_file)
