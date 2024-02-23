@@ -4,7 +4,6 @@ from pathlib import Path
 import pkgutil
 from typing import Dict, Optional, Type, TypeVar
 
-# Project Libraries
 from . import NiceBase
 
 T = TypeVar("T", bound=NiceBase)

@@ -1,8 +1,10 @@
+# Standard Python Libraries
+import logging
 from pathlib import Path
-from .. import PostProcessBase
 import subprocess
 import tempfile
-import logging
+
+from .. import PostProcessBase
 
 
 class GSCompress(PostProcessBase):

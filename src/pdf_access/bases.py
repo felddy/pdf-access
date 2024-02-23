@@ -1,4 +1,7 @@
+# Standard Python Libraries
 from pathlib import Path
+
+# Third-Party Libraries
 import fitz
 
 
