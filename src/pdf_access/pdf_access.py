@@ -71,6 +71,9 @@ def main() -> None:
     )
     pp = pprint.PrettyPrinter(indent=4)
 
+    if args.dry_run:
+        logging.warn("Dry run: no files will be modified")
+
     # Read the configuration file
     config = read_config(args.config_file)
     logging.debug("Configuration:\n%s", pp.pformat(config))
