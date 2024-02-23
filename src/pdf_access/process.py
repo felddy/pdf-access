@@ -161,6 +161,7 @@ def process(
     post_process_registry: dict[str, PostProcessBase],
     debug: bool = False,
     dry_run: bool = False,
+    force: bool = False,
 ) -> None:
     """Process the PDF files according to the configuration."""
 
@@ -193,7 +194,8 @@ def process(
 
                 # if the out_file already exists and it's newer than the in_file, skip it
                 if (
-                    out_file.exists()
+                    not force
+                    and out_file.exists()
                     and out_file.stat().st_mtime > in_file.stat().st_mtime
                 ):
                     logging.info("Output file is already up to date")

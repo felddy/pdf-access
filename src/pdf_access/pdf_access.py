@@ -56,6 +56,9 @@ def main() -> None:
         "--dry-run", "-d", help="do not modify files", action="store_true"
     )
     parser.add_argument(
+        "--force", "-f", help="ignore existing file timestamps", action="store_true"
+    )
+    parser.add_argument(
         "--log-level",
         "-l",
         help="set the logging level",
@@ -104,6 +107,7 @@ def main() -> None:
         post_process_registry,
         debug=args.debug,
         dry_run=args.dry_run,
+        force=args.force,
     )
 
     # Stop logging and clean up
