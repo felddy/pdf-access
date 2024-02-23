@@ -9,7 +9,7 @@ import uuid
 # Third-Party Libraries
 import fitz
 
-from . import PostProcessBase, TechniqueBase
+from . import PostProcessBase, TechniqueBase, Config, Source, Publisher
 
 
 def verify_paths(in_path: Path, out_path: Path) -> bool:
@@ -22,7 +22,7 @@ def verify_paths(in_path: Path, out_path: Path) -> bool:
     return True
 
 
-def do_authentication(doc: fitz.Document, publishers: Dict[str, Any]) -> bool:
+def do_authentication(doc: fitz.Document, publishers: Dict[str, Publisher]) -> bool:
     """Attempt to authenticate the document using the passwords for the publishers."""
     if not doc.is_encrypted:
         logging.debug("Document is not encrypted")
@@ -30,8 +30,7 @@ def do_authentication(doc: fitz.Document, publishers: Dict[str, Any]) -> bool:
     logging.info("Password required. Attempting to authenticate")
 
     for publisher_name, publisher in publishers.items():
-        passwords = publisher.get("passwords", [])
-        for password in passwords:
+        for password in publisher.passwords:
             logging.debug("Attempting password for %s", publisher_name)
             if doc.authenticate(password):
                 logging.info("Authenticated with password for %s", publisher_name)
@@ -40,16 +39,15 @@ def do_authentication(doc: fitz.Document, publishers: Dict[str, Any]) -> bool:
 
 
 def select_publishers(
-    source: Dict[str, Dict], publishers: Dict[str, Dict]
-) -> Dict[str, Dict]:
+    source: Source, publishers: Dict[str, Publisher]
+) -> Dict[str, Publisher]:
     # If the source defines publishers, use them; otherwise, use all
-    publisher_keys = source.get("publishers", None)
-    if publisher_keys is None:
+    if len(source.publishers) == 0:
         logging.debug("All publishers are in scope for this source")
         return publishers
     # select the publishers that are in scope for this source
     selected_publishers = {
-        key: value for key, value in publishers.items() if key in publisher_keys
+        key: value for key, value in publishers.items() if key in source.publishers
     }
     logging.debug(
         "Publishers in scope for this source: %s", ", ".join(selected_publishers)
@@ -58,14 +56,14 @@ def select_publishers(
 
 
 def choose_publisher(
-    doc: fitz.Document, publishers: Dict[str, Any]
-) -> Optional[Dict[str, Any]]:
+    doc: fitz.Document, publishers: Dict[str, Publisher]
+) -> Optional[Dict[str, Publisher]]:
     """Check the metadata to determine the publisher of the document."""
     logging.debug("Metadata: %s", doc.metadata)
     for publisher_name, publisher in publishers.items():
         matches_failed = False
         logging.debug("Evaluating publisher for selection: %s", publisher_name)
-        for field, regex in publisher.get("metadata_search", {}).items():
+        for field, regex in publisher.metadata_search.items():
             if matches_failed:
                 logging.debug(
                     "Search failure occurred, skipping publisher: %s", publisher_name
@@ -93,23 +91,22 @@ def choose_publisher(
 
 def apply_techniques(
     doc: fitz.Document,
-    config: Dict[str, Any],
+    config: Config,
     publisher: Dict[str, Any],
     tech_registry: dict[str, TechniqueBase],
 ) -> None:
     # Get the list of plans for this publisher
-    plan_names = publisher.get("plans", [])
-    for plan_name in plan_names:
-        if not (plan := config["plans"].get(plan_name)):
+    for plan_name in publisher.plans:
+        if not (plan := config.plans.get(plan_name)):
             logging.warn('Skipping unknown plan "%s"', plan_name)
             continue
-        if not (tech_function := tech_registry.get(plan["technique"])):
+        if not (tech_function := tech_registry.get(plan.technique)):
             logging.warn('Skipping unknown technique "%s"', plan)
             continue
         logging.info("Running plan: %s", plan_name)
         logging.info("Applying technique: %s", tech_function.nice_name)
-        logging.debug("Calling technique with: %s, %s", doc, plan.get("args", {}))
-        tech_function.apply(doc=doc, **plan.get("args", {}))
+        logging.debug("Calling technique with: %s, %s", doc, plan.args)
+        tech_function.apply(doc=doc, **plan.args)
 
 
 def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
@@ -143,11 +140,11 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
 def apply_post_processing(
     in_file: Path,
     out_file: Path,
-    source: Dict[str, Any],
+    source: Source,
     post_process_registry: Dict[str, PostProcessBase],
 ):
     # loop through post-processors
-    for post_processor_name in source.get("post-process", []):
+    for post_processor_name in source.post_process:
         if not (post_processor := post_process_registry.get(post_processor_name)):
             logging.warn(
                 'Skipping unknown post-processor "%s"',
@@ -159,7 +156,7 @@ def apply_post_processing(
 
 
 def process(
-    config: Dict[str, Any],
+    config: Config,
     tech_registry: dict[str, TechniqueBase],
     post_process_registry: dict[str, PostProcessBase],
     debug: bool = False,
@@ -168,21 +165,21 @@ def process(
     """Process the PDF files according to the configuration."""
 
     logging.debug(
-        "%s sources found: %s", len(config["sources"]), ", ".join(config["sources"])
+        "%s sources found: %s", len(config.sources), ", ".join(config.sources)
     )
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir: Path = Path(temp_dir)
         # loop through sources
-        for source_name, source in config["sources"].items():
+        for source_name, source in config.sources.items():
             logging.info("Processing source: %s", source_name)
-            in_path = Path(source["in_path"])
-            out_path = Path(source["out_path"])
-            out_suffix = source.get("out_suffix", "")
+            in_path = Path(source.in_path)
+            out_path = Path(source.out_path)
+            out_suffix = source.out_suffix
             if not verify_paths(in_path, out_path):
                 logging.warn("Skipping source %s", source_name)
                 continue
             # determine which publishers are in scope for this source
-            publishers = select_publishers(source, config["publishers"])
+            publishers = select_publishers(source, config.publishers)
             # recursively process the input path
             for in_file in in_path.glob("**/*.pdf"):
                 logging.info("Processing file: %s", in_file)

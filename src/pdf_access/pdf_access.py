@@ -8,14 +8,15 @@ import os
 import pprint
 import sys
 import tomllib
-from typing import Any, Dict
-
-from . import PostProcessBase, TechniqueBase, discover_and_register, process
+from pydantic import ValidationError
+from . import Config, PostProcessBase, TechniqueBase, discover_and_register, process
 from ._version import __version__
 
 
-def read_config(config_file: str) -> Dict[str, Any]:
+def read_config(config_file: str) -> Config:
     """Read the configuration file and return its contents as a dictionary."""
+    pp = pprint.PrettyPrinter(indent=4)
+
     if not os.path.isfile(config_file):
         logging.error("Config file not found: %s", config_file)
         sys.exit(1)
@@ -23,9 +24,17 @@ def read_config(config_file: str) -> Dict[str, Any]:
     try:
         logging.debug("Reading config file: %s", config_file)
         with open(config_file, "rb") as f:
-            return tomllib.load(f)
+            config_dict = tomllib.load(f)
     except tomllib.TOMLDecodeError as e:
-        logging.error("Error parsing config file: %s", e)
+        logging.error("Error decoding toml file: %s", e)
+        sys.exit(1)
+
+    try:
+        config = Config(**config_dict)
+        logging.debug("Parsed configuration:\n%s", pp.pformat(config.dict()))
+        return config
+    except ValidationError as e:
+        logging.error(e)
         sys.exit(1)
 
 
@@ -69,27 +78,24 @@ def main() -> None:
     logging.basicConfig(
         format="%(asctime)-15s %(levelname)s %(message)s", level=args.log_level.upper()
     )
-    pp = pprint.PrettyPrinter(indent=4)
 
     if args.dry_run:
         logging.warn("Dry run: no files will be modified")
 
     # Read the configuration file
     config = read_config(args.config_file)
-    logging.debug("Configuration:\n%s", pp.pformat(config))
-    # TODO verify the configuration schema
 
     # Discover and register the techniques
     tech_registry: dict[str, TechniqueBase] = discover_and_register(
         "techniques", TechniqueBase
     )
-    logging.debug("Techniques:\n%s", pp.pformat(tech_registry))
+    logging.debug("Techniques: %s", tech_registry.keys())
 
     # Discover and register the post-processors
     post_process_registry: dict[str, PostProcessBase] = discover_and_register(
         "post_process", PostProcessBase
     )
-    logging.debug("Post-processors:\n%s", pp.pformat(post_process_registry))
+    logging.debug("Post-processors: %s", post_process_registry.keys())
 
     # Process the PDF files
     process(

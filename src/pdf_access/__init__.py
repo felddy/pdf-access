@@ -6,13 +6,19 @@
 # Python package.
 from ._version import __version__  # noqa: F401
 from .bases import NiceBase, PostProcessBase, TechniqueBase
+from .config_model import Config, Plan, Publisher, Settings, Source
 from .process import process
 from .registry import discover_and_register
 
 __all__ = [
+    "Config",
     "discover_and_register",
     "NiceBase",
+    "Plan",
     "PostProcessBase",
     "process",
+    "Publisher",
+    "Settings",
+    "Source",
     "TechniqueBase",
 ]
