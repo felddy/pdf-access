@@ -79,7 +79,9 @@ def main() -> None:
 
     # Set up logging
     logging.basicConfig(
-        format="%(asctime)-15s %(levelname)s %(message)s", level=args.log_level.upper()
+        format="%(asctime)-15s %(levelname)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=args.log_level.upper(),
     )
 
     if args.dry_run:
