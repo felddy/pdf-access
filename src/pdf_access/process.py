@@ -12,8 +12,23 @@ import fitz
 from . import PostProcessBase, TechniqueBase
 
 
+def verify_paths(in_path: Path, out_path: Path) -> bool:
+    if not in_path.exists():
+        logging.error("Input path does not exist: %s", in_path)
+        return False
+    if not out_path.exists():
+        logging.error("Output path does not exist: %s", out_path)
+        return False
+    return True
+
+
 def do_authentication(doc: fitz.Document, publishers: Dict[str, Any]) -> bool:
     """Attempt to authenticate the document using the passwords for the publishers."""
+    if not doc.is_encrypted:
+        logging.debug("Document is not encrypted")
+        return True
+    logging.info("Password required. Attempting to authenticate")
+
     for publisher_name, publisher in publishers.items():
         passwords = publisher.get("passwords", [])
         for password in passwords:
@@ -46,6 +61,7 @@ def choose_publisher(
     doc: fitz.Document, publishers: Dict[str, Any]
 ) -> Optional[Dict[str, Any]]:
     """Check the metadata to determine the publisher of the document."""
+    logging.debug("Metadata: %s", doc.metadata)
     for publisher_name, publisher in publishers.items():
         matches_failed = False
         logging.debug("Evaluating publisher for selection: %s", publisher_name)
@@ -73,6 +89,27 @@ def choose_publisher(
             return publisher
     logging.debug("No publishers matched")
     return None
+
+
+def apply_techniques(
+    doc: fitz.Document,
+    config: Dict[str, Any],
+    publisher: Dict[str, Any],
+    tech_registry: dict[str, TechniqueBase],
+) -> None:
+    # Get the list of plans for this publisher
+    plan_names = publisher.get("plans", [])
+    for plan_name in plan_names:
+        if not (plan := config["plans"].get(plan_name)):
+            logging.warn('Skipping unknown plan "%s"', plan_name)
+            continue
+        if not (tech_function := tech_registry.get(plan["technique"])):
+            logging.warn('Skipping unknown technique "%s"', plan)
+            continue
+        logging.info("Running plan: %s", plan_name)
+        logging.info("Applying technique: %s", tech_function.nice_name)
+        logging.debug("Calling technique with: %s, %s", doc, plan.get("args", {}))
+        tech_function.apply(doc=doc, **plan.get("args", {}))
 
 
 def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
@@ -103,6 +140,24 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
         )
 
 
+def apply_post_processing(
+    in_file: Path,
+    out_file: Path,
+    source: Dict[str, Any],
+    post_process_registry: Dict[str, PostProcessBase],
+):
+    # loop through post-processors
+    for post_processor_name in source.get("post-process", []):
+        if not (post_processor := post_process_registry.get(post_processor_name)):
+            logging.warn(
+                'Skipping unknown post-processor "%s"',
+                post_processor_name,
+            )
+            continue
+        logging.info("Applying post-processor: %s", post_processor.nice_name)
+        post_processor.apply(in_path=in_file, out_path=out_file)
+
+
 def process(
     config: Dict[str, Any],
     tech_registry: dict[str, TechniqueBase],
@@ -123,12 +178,8 @@ def process(
             in_path = Path(source["in_path"])
             out_path = Path(source["out_path"])
             out_suffix = source.get("out_suffix", "")
-            # verify that both paths exist
-            if not in_path.exists():
-                logging.error("Input path does not exist: %s", in_path)
-                continue
-            if not out_path.exists():
-                logging.error("Output path does not exist: %s", out_path)
+            if not verify_paths(in_path, out_path):
+                logging.warn("Skipping source %s", source_name)
                 continue
             # determine which publishers are in scope for this source
             publishers = select_publishers(source, config["publishers"])
@@ -154,50 +205,21 @@ def process(
                 temp_out_file: Path = temp_dir / (str(uuid.uuid4()) + ".pdf")
                 # process the file
                 with fitz.open(in_file) as doc:
-                    if doc.is_encrypted:
-                        logging.info("Password required for %s", in_file)
-                        if not do_authentication(doc, publishers):
-                            logging.warn("Skipping file since no password found")
-                            continue
-                    # Check metadata to determine publisher
-                    logging.debug("Metadata: %s", doc.metadata)
+                    if not do_authentication(doc, publishers):
+                        logging.warn("Skipping file since no password found")
+                        continue
                     if not (publisher := choose_publisher(doc, publishers)):
                         logging.warn("Skipping file since no publisher found")
                         continue
 
-                    # Get the list of plans for this publisher
-                    plan_names = publisher.get("plans", [])
-                    for plan_name in plan_names:
-                        if not (plan := config["plans"].get(plan_name)):
-                            logging.warn('Skipping unknown plan "%s"', plan_name)
-                            continue
-                        if not (tech_function := tech_registry.get(plan["technique"])):
-                            logging.warn('Skipping unknown technique "%s"', plan)
-                            continue
-                        logging.info("Running plan: %s", plan_name)
-                        logging.info("Applying technique: %s", tech_function.nice_name)
-                        logging.debug(
-                            "Calling technique with: %s, %s", doc, plan.get("args", {})
-                        )
-                        tech_function.apply(doc=doc, **plan.get("args", {}))
+                    apply_techniques(doc, config, publisher, tech_registry)
 
                     save_pdf(doc, temp_out_file, debug=debug)
-                    # loop through post-processors
-                    for post_processor_name in source.get("post-process", []):
-                        if not (
-                            post_processor := post_process_registry.get(
-                                post_processor_name
-                            )
-                        ):
-                            logging.warn(
-                                'Skipping unknown post-processor "%s"',
-                                post_processor_name,
-                            )
-                            continue
-                        logging.info(
-                            "Applying post-processor: %s", post_processor.nice_name
-                        )
-                        post_processor.apply(in_path=in_file, out_path=temp_out_file)
+
+                    apply_post_processing(
+                        in_file, temp_out_file, source, post_process_registry
+                    )
+
                     if dry_run:
                         logging.warn("Dry run: not saving file %s", out_file)
                         temp_out_file.unlink()
