@@ -14,7 +14,7 @@ class ClearEncodingDifferencesTechnique(TechniqueBase):
     def apply(cls, doc: fitz.Document):
         for xref_num in range(1, doc.xref_length()):
             stream_keys = doc.xref_get_keys(xref_num)
-            if "Differences" in stream_keys:
+            if {"Differences", "BaseEncoding"} <= set(stream_keys):
                 logging.debug("Clearing differences in object %s", xref_num)
                 _, diffs = doc.xref_get_key(xref_num, "Differences")
                 diff_count = len(diffs.split("/")) - 1
