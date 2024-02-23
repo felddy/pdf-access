@@ -2,7 +2,7 @@
 import logging
 from pathlib import Path
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 # Third-Party Libraries
 import fitz
@@ -22,7 +22,9 @@ def do_authentication(doc: fitz.Document, publishers: Dict[str, Any]) -> bool:
     return False
 
 
-def select_publishers(source: Dict[str, Any], publishers: Dict[str, Any]) -> list[str]:
+def select_publishers(
+    source: Dict[str, Dict], publishers: Dict[str, Dict]
+) -> Dict[str, Dict]:
     # If the source defines publishers, use them; otherwise, use all
     publisher_keys = source.get("publishers", None)
     if publisher_keys is None:
@@ -38,7 +40,9 @@ def select_publishers(source: Dict[str, Any], publishers: Dict[str, Any]) -> lis
     return selected_publishers
 
 
-def choose_publisher(doc: fitz.Document, publishers: Dict[str, Any]) -> Dict[str, Any]:
+def choose_publisher(
+    doc: fitz.Document, publishers: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
     """Check the metadata to determine the publisher of the document."""
     for publisher_name, publisher in publishers.items():
         matches_failed = False
@@ -158,20 +162,21 @@ def process(
                     logging.warn("Skipping file since no publisher found")
                     continue
 
-                # Get the list of rules for this publisher
-                rule_names = publisher.get("rules", [])
-                for rule_name in rule_names:
-                    if not (rule := config["rules"].get(rule_name)):
-                        logging.warn('Skipping unknown rule "%s"', rule_name)
+                # Get the list of plans for this publisher
+                plan_names = publisher.get("plans", [])
+                for plan_name in plan_names:
+                    if not (plan := config["plans"].get(plan_name)):
+                        logging.warn('Skipping unknown plan "%s"', plan_name)
                         continue
-                    if not (tech_function := tech_registry.get(rule["technique"])):
-                        logging.warn('Skipping unknown technique "%s"', rule)
+                    if not (tech_function := tech_registry.get(plan["technique"])):
+                        logging.warn('Skipping unknown technique "%s"', plan)
                         continue
+                    logging.info("Running plan: %s", plan_name)
                     logging.info("Applying technique: %s", tech_function.nice_name)
                     logging.debug(
-                        "Calling technique with: %s, %s", doc, rule.get("args", {})
+                        "Calling technique with: %s, %s", doc, plan.get("args", {})
                     )
-                    tech_function.apply(doc=doc, **rule.get("args", {}))
+                    tech_function.apply(doc=doc, **plan.get("args", {}))
 
                 if not dry_run:
                     save_pdf(doc, out_file, debug=debug, dry_run=dry_run)

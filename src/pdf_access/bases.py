@@ -15,7 +15,7 @@ class NiceBase:
 
 class PostProcessBase(NiceBase):
     # Subclasses should override this with their unique nice name
-    nice_name: str = None
+    nice_name: str
 
     @classmethod
     def apply(self, in_path: Path, out_path: Path, **kwargs):
@@ -26,7 +26,7 @@ class PostProcessBase(NiceBase):
 
 class TechniqueBase(NiceBase):
     # Subclasses should override this with their unique nice name
-    nice_name: str = None
+    nice_name: str
 
     @classmethod
     def apply(self, doc: fitz.Document, **kwargs):
