@@ -183,6 +183,7 @@ def process(
             publishers = select_publishers(source, config.publishers)
             # recursively process the input path
             for in_file in in_path.glob("**/*.pdf"):
+                logging.info("-" * 80)
                 logging.info("Processing file: %s", in_file)
                 # calculate the output path for the file
                 out_file = out_path / in_file.relative_to(in_path).with_stem(
