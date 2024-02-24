@@ -64,6 +64,19 @@ def choose_publisher(
     for publisher_name, publisher in publishers.items():
         matches_failed = False
         logging.debug('Evaluating publisher: "%s"', publisher_name)
+        # Check to see if filename matches the path_regex
+        if not re.search(publisher.path_regex, doc.name):
+            logging.debug(
+                'Path regex "%s" does not match: "%s"',
+                publisher.path_regex.pattern,
+                doc.name,
+            )
+            matches_failed = True
+            continue
+        else:
+            logging.debug(
+                'Path regex "%s" matches: "%s"', publisher.path_regex.pattern, doc.name
+            )
         for field, regex in publisher.metadata_search.items():
             if matches_failed:
                 logging.debug(
@@ -84,6 +97,12 @@ def choose_publisher(
                 )
                 matches_failed = True
                 continue
+            logging.debug(
+                'Metadata regex "%s" matches: {"%s": "%s"}',
+                regex,
+                field,
+                doc.metadata[field],
+            )
         if not matches_failed:
             logging.debug('All metadata regexes matched for "%s"', publisher_name)
             return publisher
@@ -131,6 +150,7 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
         )
     else:
         logging.debug("Saving optimized file to %s", out_file)
+        # TODO move scrub to technique
         doc.scrub(
             attached_files=True,
             clean_pages=True,
@@ -210,6 +230,8 @@ def process(
                 out_suffix = source.out_suffix
                 if not verify_paths(in_path, out_path):
                     logging.warn("Skipping source %s", source_name)
+                    if source_task:
+                        progress.update(source_task, advance=1)
                     continue
                 # determine which publishers are in scope for this source
                 publishers = select_publishers(source, config.publishers)
@@ -220,33 +242,34 @@ def process(
                     total=len(in_files),
                 )
                 for in_file in in_files:
-                    logging.info("-" * 80)
-                    logging.info("Processing file: %s", in_file)
+                    logging.debug("Evaluating file: %s", in_file)
                     # calculate the output path for the file
                     out_file = out_path / in_file.relative_to(in_path).with_stem(
                         in_file.stem + out_suffix
                     )
-                    logging.info("Output file:     %s", out_file)
-                    # create the output directory if it doesn't exist
-                    out_file.parent.mkdir(parents=True, exist_ok=True)
-
                     # if the out_file already exists and it's newer than the in_file, skip it
                     if (
                         not force
                         and out_file.exists()
                         and out_file.stat().st_mtime > in_file.stat().st_mtime
                     ):
-                        logging.info("Output file is already up to date")
+                        logging.debug("Output file is already up to date")
+                        progress.update(files_task, advance=1)
                         continue
+                    logging.info("-" * 80)
+                    logging.info("Processing file: %s", in_file)
+                    logging.info("Output file:     %s", out_file)
                     # Create a temporary file to save the output
                     temp_out_file: Path = temp_dir / (str(uuid.uuid4()) + ".pdf")
                     # process the file
                     with fitz.open(in_file) as doc:
                         if not do_authentication(doc, publishers):
                             logging.warn("Skipping file since no password found")
+                            progress.update(files_task, advance=1)
                             continue
                         if not (publisher := choose_publisher(doc, publishers)):
                             logging.warn("Skipping file since no publisher found")
+                            progress.update(files_task, advance=1)
                             continue
                         apply_techniques(doc, config, publisher, tech_registry)
                         save_pdf(doc, temp_out_file, debug=debug)
@@ -260,6 +283,8 @@ def process(
                             temp_out_file.unlink()
                         else:
                             logging.debug("Saving final output to %s", out_file)
+                            # create the output directory if it doesn't exist
+                            out_file.parent.mkdir(parents=True, exist_ok=True)
                             temp_out_file.replace(out_file)
                     progress.update(files_task, advance=1)
                 progress.remove_task(files_task)
