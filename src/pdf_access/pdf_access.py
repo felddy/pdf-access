@@ -8,7 +8,11 @@ import os
 import pprint
 import sys
 import tomllib
+
+from rich.logging import RichHandler
+from rich.traceback import install as traceback_install
 from pydantic import ValidationError
+
 from . import Config, PostProcessBase, TechniqueBase, discover_and_register, process
 from ._version import __version__
 
@@ -79,10 +83,16 @@ def main() -> None:
 
     # Set up logging
     logging.basicConfig(
-        format="%(asctime)-15s %(levelname)s %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+        format="%(message)s",
+        # datefmt="%Y-%m-%d %H:%M:%S",
         level=args.log_level.upper(),
+        handlers=[
+            RichHandler(rich_tracebacks=True, show_path=args.log_level == "debug")
+        ],
     )
+
+    # Set up tracebacks
+    traceback_install(show_locals=True)
 
     if args.dry_run:
         logging.warn("Dry run: no files will be modified")
