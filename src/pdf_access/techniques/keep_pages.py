@@ -8,5 +8,6 @@ class KeepPagesTechnique(TechniqueBase):
     nice_name = "keep-pages"
 
     @classmethod
-    def apply(cls, doc: fitz.Document, pages: list[int]):
+    def apply(cls, doc: fitz.Document, pages: list[int]) -> int:
         doc.select(pages)
+        return 1

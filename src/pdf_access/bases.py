@@ -29,5 +29,5 @@ class TechniqueBase(NiceBase):
     nice_name: str
 
     @classmethod
-    def apply(self, doc: fitz.Document, **kwargs):
+    def apply(self, doc: fitz.Document, **kwargs) -> int:
         raise NotImplementedError("Each technique must implement the apply method.")

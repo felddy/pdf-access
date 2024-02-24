@@ -108,7 +108,11 @@ def apply_techniques(
         logging.info("Running plan: %s", plan_name)
         logging.info("Applying technique: %s", tech_function.nice_name)
         logging.debug("Calling technique with: %s, %s", doc, plan.args)
-        tech_function.apply(doc=doc, **plan.args)
+        change_count = tech_function.apply(doc=doc, **plan.args)
+        if change_count:
+            logging.debug("Changes made: %s", change_count)
+        else:
+            logging.warm("No changes made")
 
 
 def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
@@ -197,6 +201,8 @@ def process(
                     "Sources",
                     total=len(config.sources),
                 )
+            else:
+                source_task = None
             for source_name, source in config.sources.items():
                 logging.info("Processing source: %s", source_name)
                 in_path = Path(source.in_path)

@@ -12,7 +12,8 @@ class GatedRegexTechnique(TechniqueBase):
     nice_name = "gated-regex"
 
     @classmethod
-    def apply(cls, doc: fitz.Document, gate_re: str, clear_res: list[str]):
+    def apply(cls, doc: fitz.Document, gate_re: str, clear_res: list[str]) -> None:
+        change_count = 0
         gate_re = re.compile(gate_re.encode())
         clear_res = [re.compile(r.encode()) for r in clear_res]
 
@@ -23,11 +24,10 @@ class GatedRegexTechnique(TechniqueBase):
             if not doc.xref_is_stream(xref_num):
                 continue  # skip non-stream objects
             if gate_re.search(doc.xref_stream(xref_num)):
-                # check to see if debug logging is enabled
-                if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
-                    logging.debug("Found watermark in object %s", xref_num)
                 # replace all instances of the regex with an empty print statement
                 new_stream = doc.xref_stream(xref_num)
                 for regex in clear_res:
-                    new_stream = re.sub(regex, b"() Tj", new_stream)
+                    new_stream, subs_made = re.subn(regex, b"() Tj", new_stream)
+                    change_count += subs_made
                 doc.update_stream(xref_num, new_stream)
+        return change_count
