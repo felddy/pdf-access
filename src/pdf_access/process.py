@@ -8,6 +8,7 @@ import uuid
 
 # Third-Party Libraries
 import fitz
+import humanize
 from rich.progress import Progress, SpinnerColumn, MofNCompleteColumn
 
 from . import PostProcessBase, ActionBase, Config, Source, Plan
@@ -96,7 +97,8 @@ def choose_plan(
                 doc.metadata[field],
             )
         if not matches_failed:
-            logging.debug('All metadata regexes matched for "%s"', plan_name)
+            logging.debug("All metadata regexes matched.")
+            logging.info('Selected plan: "%s"', plan_name)
             return plan
     logging.debug("No plans matched")
     return None
@@ -107,23 +109,37 @@ def apply_actions(
     config: Config,
     plan: Plan,
     action_registry: dict[str, ActionBase],
-) -> None:
+) -> bool:
+    """Apply the actions from the plan to the document.
+
+    Returns True processing should continue.
+    Returns False if processing should stop."""
     # Get the list of actions for this plan
     for action_name in plan.actions:
         if not (action := config.actions.get(action_name)):
-            logging.warn('Skipping unknown action "%s"', action_name)
+            logging.warn('Skipping action not found in config: "%s"', action_name)
             continue
         if not (action_function := action_registry.get(action.action)):
-            logging.warn('Skipping unknown action "%s"', action)
+            logging.warn(
+                'Skipping action function not found in registry "%s"', action.action
+            )
             continue
-        logging.info("Running action: %s", action_name)
-        logging.info("Applying action: %s", action_function.nice_name)
-        logging.debug("Calling action with: %s, %s", doc, action.args)
-        change_count = action_function.apply(doc=doc, **action.args)
+        logging.info('Running action: "%s"', action_name)
+        logging.debug(
+            'Calling action "%s" with: %s, %s',
+            action_function.nice_name,
+            doc,
+            action.args,
+        )
+        (change_count, should_continue) = action_function.apply(doc=doc, **action.args)
+        if not should_continue:
+            logging.warn('Action "%s" signaled to stop processing', action_name)
+            return False
         if change_count:
             logging.debug("Changes made: %s", change_count)
         else:
-            logging.warm("No changes made")
+            logging.warn("No changes made")
+    return True
 
 
 def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
@@ -172,18 +188,18 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
 def apply_post_processing(
     in_file: Path,
     out_file: Path,
-    source: Source,
+    plan: Plan,
     post_process_registry: Dict[str, PostProcessBase],
 ):
     # loop through post-processors
-    for post_processor_name in source.post_process:
+    for post_processor_name in plan.post_process:
         if not (post_processor := post_process_registry.get(post_processor_name)):
             logging.warn(
                 'Skipping unknown post-processor "%s"',
                 post_processor_name,
             )
             continue
-        logging.info("Applying post-processor: %s", post_processor.nice_name)
+        logging.info('Applying post-processor: "%s"', post_processor.nice_name)
         post_processor.apply(in_path=in_file, out_path=out_file)
 
 
@@ -212,7 +228,10 @@ def process(
     """Process the PDF files according to the configuration."""
 
     logging.debug(
-        "%s sources found: %s", len(config.sources), ", ".join(config.sources)
+        "%s source%s found: %s",
+        len(config.sources),
+        "s" if len(config.sources) != 1 else "",
+        ",".join(config.sources),
     )
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir: Path = Path(temp_dir)
@@ -230,12 +249,14 @@ def process(
             else:
                 source_task = None
             for source_name, source in config.sources.items():
-                logging.info("Processing source: %s", source_name)
+                logging.info('Processing source: "%s"', source_name)
+                logging.info('Input path:   "%s"', source.in_path)
+                logging.info('Output path:  "%s"', source.out_path)
                 in_path = Path(source.in_path)
                 out_path = Path(source.out_path)
                 out_suffix = source.out_suffix
                 if not verify_paths(in_path, out_path):
-                    logging.warn("Skipping source %s", source_name)
+                    logging.warn('Skipping source "%s"', source_name)
                     if source_task:
                         progress.update(source_task, advance=1)
                     continue
@@ -248,7 +269,7 @@ def process(
                     total=len(in_files),
                 )
                 for in_file in in_files:
-                    logging.debug("Evaluating file: %s", in_file)
+                    logging.debug('Evaluating file: "%s"', in_file)
                     # calculate the output path for the file
                     out_file = out_path / in_file.relative_to(in_path).with_stem(
                         in_file.stem + out_suffix
@@ -263,8 +284,8 @@ def process(
                         progress.update(files_task, advance=1)
                         continue
                     logging.info("-" * 80)
-                    logging.info("Processing file: %s", in_file)
-                    logging.info("Output file:     %s", out_file)
+                    logging.info('Processing file: "%s"', in_file)
+                    logging.info('Output file:     "%s"', out_file)
                     # Create a temporary file to save the output
                     temp_out_file: Path = temp_dir / (str(uuid.uuid4()) + ".pdf")
                     # process the file
@@ -277,20 +298,23 @@ def process(
                             logging.warn("Skipping file since no plan found")
                             progress.update(files_task, advance=1)
                             continue
-                        apply_actions(doc, config, plan, action_registry)
+                        if not apply_actions(doc, config, plan, action_registry):
+                            logging.warn("Skipping file since an action failed")
+                            progress.update(files_task, advance=1)
+                            continue
                         save_pdf(doc, temp_out_file, debug=debug)
 
                         apply_post_processing(
-                            in_file, temp_out_file, source, post_process_registry
+                            in_file, temp_out_file, plan, post_process_registry
                         )
 
                         size_report(in_file, temp_out_file)
 
                         if dry_run:
-                            logging.info("Dry run: not saving file %s", out_file)
+                            logging.info('Dry run: not saving file "%s"', out_file)
                             temp_out_file.unlink()
                         else:
-                            logging.debug("Saving final output to %s", out_file)
+                            logging.debug('Saving final output to "%s"', out_file)
                             # create the output directory if it doesn't exist
                             out_file.parent.mkdir(parents=True, exist_ok=True)
                             temp_out_file.replace(out_file)
