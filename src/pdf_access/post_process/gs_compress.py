@@ -1,7 +1,7 @@
 # Standard Python Libraries
 import logging
 from pathlib import Path
-import subprocess
+from subprocess import run, CompletedProcess, PIPE, STDOUT
 import tempfile
 
 from .. import PostProcessBase
@@ -15,7 +15,7 @@ class GSCompress(PostProcessBase):
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = Path(temp_dir) / out_path.name
             # Create a temporary directory to store the compressed files
-            cp: subprocess.CompletedProcess = subprocess.run(
+            cp: CompletedProcess = run(
                 [
                     "gs",
                     "-DQUIET",
@@ -25,8 +25,11 @@ class GSCompress(PostProcessBase):
                     "-sOutputFile=" + str(temp_file),
                     "-f",
                     out_path,
-                ]
+                ],
+                stdout=PIPE,  # Capture standard output
+                stderr=STDOUT,  # Redirect standard error to standard output
             )
+            logging.debug("Ghostscript output:\n%s", cp.stdout.decode())
             if cp.returncode:
                 logging.error("Ghostscript failed to compress %s", in_path)
             else:
