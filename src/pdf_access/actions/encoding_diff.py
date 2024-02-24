@@ -9,6 +9,8 @@ from .. import ActionBase
 
 
 class ClearEncodingDifferencesAction(ActionBase):
+    """Clear differences in encoding objects."""
+
     nice_name = "clear_encoding_differences"
 
     @classmethod

@@ -9,6 +9,8 @@ from .. import ActionBase
 
 
 class ClearStreamAction(ActionBase):
+    """Clear stream objects matching a regular expression."""
+
     nice_name = "clear-stream"
 
     @classmethod

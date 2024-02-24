@@ -8,6 +8,8 @@ from .. import ActionBase
 
 
 class DetectTextAction(ActionBase):
+    """Detect text matching a regular expression."""
+
     nice_name = "detect-text"
 
     @classmethod

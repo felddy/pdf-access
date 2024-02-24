@@ -6,6 +6,8 @@ from .. import ActionBase
 
 
 class KeepPagesAction(ActionBase):
+    """Keep only the specified pages."""
+
     nice_name = "keep-pages"
 
     @classmethod

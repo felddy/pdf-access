@@ -8,6 +8,8 @@ from .. import PostProcessBase
 
 
 class GSCompressProcess(PostProcessBase):
+    """Compress a PDF using Ghostscript."""
+
     nice_name = "gs-compress"
 
     @classmethod

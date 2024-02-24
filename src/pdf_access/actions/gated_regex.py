@@ -10,6 +10,8 @@ from .. import ActionBase
 
 
 class GatedRegexAction(ActionBase):
+    """Clear stream objects matching a regular expression, but only if a gate regex matches."""
+
     nice_name = "gated-regex"
 
     @classmethod

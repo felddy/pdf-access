@@ -9,8 +9,11 @@ import pprint
 import sys
 import tomllib
 
+from rich.console import Console
 from rich.logging import RichHandler
+from rich.table import Table
 from rich.traceback import install as traceback_install
+
 from pydantic import ValidationError
 
 from . import Config, PostProcessBase, ActionBase, discover_and_register, process
@@ -40,6 +43,34 @@ def read_config(config_file: str) -> Config:
     except ValidationError as e:
         logging.error(e)
         sys.exit(1)
+
+
+def print_id_tables(action_registry, post_process_registry):
+    console = Console()
+
+    # Table for Actions
+    action_table = Table(
+        show_header=True, header_style="bold magenta", row_styles=["none", "dim"]
+    )
+    action_table.add_column("Action")
+    action_table.add_column("Description")
+
+    for k, v in action_registry.items():
+        action_table.add_row(k, v.__doc__ or "No description available")
+
+    console.print(action_table)
+
+    # Table for Post-processors
+    post_processor_table = Table(
+        show_header=True, header_style="bold magenta", row_styles=["none", "dim"]
+    )
+    post_processor_table.add_column("Post-Processor")
+    post_processor_table.add_column("Description")
+
+    for k, v in post_process_registry.items():
+        post_processor_table.add_row(k, v.__doc__ or "No description available")
+
+    console.print(post_processor_table)
 
 
 def main() -> None:
@@ -75,7 +106,12 @@ def main() -> None:
         help="increase verbosity (shortcut for --log-level debug)",
         action="store_true",
     )
-    # TODO add action / post-process id dump
+    parser.add_argument(
+        "--dump-ids",
+        "-i",
+        help="dump action and post-process ids, then exit.",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
@@ -112,6 +148,10 @@ def main() -> None:
         "post_process", PostProcessBase
     )
     logging.debug("Post-processors: %s", post_process_registry.keys())
+
+    if args.dump_ids:
+        print_id_tables(action_registry, post_process_registry)
+        sys.exit(0)
 
     # Process the PDF files
     process(
