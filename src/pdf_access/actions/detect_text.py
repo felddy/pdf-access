@@ -29,7 +29,7 @@ class DetectTextAction(ActionBase):
             text = page.get_text()
             if regex.search(text):
                 if stop_if_found:
-                    logging.warning("Text found on page %s", page)
+                    logging.warning("Text found on page %s", page.number + 1)
                 found_text = True
         if found_text and stop_if_found:
             return (1, False)
