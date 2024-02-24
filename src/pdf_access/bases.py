@@ -1,5 +1,6 @@
 # Standard Python Libraries
 from pathlib import Path
+from typing import Tuple
 
 # Third-Party Libraries
 import fitz
@@ -29,5 +30,6 @@ class ActionBase(NiceBase):
     nice_name: str
 
     @classmethod
-    def apply(self, doc: fitz.Document, **kwargs) -> int:
+    def apply(self, doc: fitz.Document, **kwargs) -> Tuple[int, bool]:
+        # Return a tuple of the number of changes made, and whether processing should continue
         raise NotImplementedError("Each action must implement the apply method.")

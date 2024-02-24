@@ -1,6 +1,7 @@
 # Standard Python Libraries
 import logging
 import re
+from typing import Tuple
 
 # Third-Party Libraries
 import fitz
@@ -12,7 +13,9 @@ class GatedRegexAction(ActionBase):
     nice_name = "gated-regex"
 
     @classmethod
-    def apply(cls, doc: fitz.Document, gate_re: str, clear_res: list[str]) -> None:
+    def apply(
+        cls, doc: fitz.Document, gate_re: str, clear_res: list[str]
+    ) -> Tuple[int, bool]:
         change_count = 0
         gate_re = re.compile(gate_re.encode())
         clear_res = [re.compile(r.encode()) for r in clear_res]
@@ -30,4 +33,4 @@ class GatedRegexAction(ActionBase):
                     new_stream, subs_made = re.subn(regex, b"() Tj", new_stream)
                     change_count += subs_made
                 doc.update_stream(xref_num, new_stream)
-        return change_count
+        return (change_count, True)
