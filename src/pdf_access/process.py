@@ -192,10 +192,11 @@ def process(
             MofNCompleteColumn(),
         ) as progress:
             # loop through sources
-            source_task = progress.add_task(
-                "Sources",
-                total=len(config.sources),
-            )
+            if len(config.sources) > 1:
+                source_task = progress.add_task(
+                    "Sources",
+                    total=len(config.sources),
+                )
             for source_name, source in config.sources.items():
                 logging.info("Processing source: %s", source_name)
                 in_path = Path(source.in_path)
@@ -249,11 +250,12 @@ def process(
                         )
 
                         if dry_run:
-                            logging.warn("Dry run: not saving file %s", out_file)
+                            logging.info("Dry run: not saving file %s", out_file)
                             temp_out_file.unlink()
                         else:
                             logging.debug("Saving final output to %s", out_file)
                             temp_out_file.replace(out_file)
                     progress.update(files_task, advance=1)
                 progress.remove_task(files_task)
-                progress.update(source_task, advance=1)
+                if source_task:
+                    progress.update(source_task, advance=1)
