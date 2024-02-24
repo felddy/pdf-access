@@ -8,6 +8,7 @@ import uuid
 
 # Third-Party Libraries
 import fitz
+from rich.progress import Progress, SpinnerColumn, MofNCompleteColumn
 
 from . import PostProcessBase, TechniqueBase, Config, Source, Publisher
 
@@ -62,28 +63,29 @@ def choose_publisher(
     logging.debug("Metadata: %s", doc.metadata)
     for publisher_name, publisher in publishers.items():
         matches_failed = False
-        logging.debug("Evaluating publisher for selection: %s", publisher_name)
+        logging.debug('Evaluating publisher: "%s"', publisher_name)
         for field, regex in publisher.metadata_search.items():
             if matches_failed:
                 logging.debug(
-                    "Search failure occurred, skipping publisher: %s", publisher_name
+                    'Search failure occurred, skipping publisher: "%s"', publisher_name
                 )
                 break
             logging.debug('Searching field "%s" for regex "%s"', field, regex)
             if field not in doc.metadata:
-                logging.debug("Metadata field not found: %s", field)
+                logging.debug('Metadata field not found: "%s"', field)
                 matches_failed = True
                 continue
             if not re.search(regex, doc.metadata[field]):
                 logging.debug(
-                    "Metadata regex %s does not match: %s: %s",
+                    'Metadata regex "%s" does not match: {"%s": "%s"}',
                     regex,
                     field,
                     doc.metadata[field],
                 )
                 matches_failed = True
                 continue
-            logging.debug("All metadata regexes matched for %s", publisher_name)
+        if not matches_failed:
+            logging.debug('All metadata regexes matched for "%s"', publisher_name)
             return publisher
     logging.debug("No publishers matched")
     return None
@@ -125,7 +127,21 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
         )
     else:
         logging.debug("Saving optimized file to %s", out_file)
-        doc.scrub()
+        doc.scrub(
+            attached_files=True,
+            clean_pages=True,
+            embedded_files=True,
+            hidden_text=True,
+            javascript=True,
+            metadata=True,
+            redactions=True,
+            redact_images=0,
+            remove_links=True,
+            reset_fields=True,
+            reset_responses=False,  # causes seg-fault
+            thumbnails=True,
+            xml_metadata=True,
+        )
         doc.save(
             out_file,
             garbage=4,
@@ -170,59 +186,74 @@ def process(
     )
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir: Path = Path(temp_dir)
-        # loop through sources
-        for source_name, source in config.sources.items():
-            logging.info("Processing source: %s", source_name)
-            in_path = Path(source.in_path)
-            out_path = Path(source.out_path)
-            out_suffix = source.out_suffix
-            if not verify_paths(in_path, out_path):
-                logging.warn("Skipping source %s", source_name)
-                continue
-            # determine which publishers are in scope for this source
-            publishers = select_publishers(source, config.publishers)
-            # recursively process the input path
-            for in_file in in_path.glob("**/*.pdf"):
-                logging.info("-" * 80)
-                logging.info("Processing file: %s", in_file)
-                # calculate the output path for the file
-                out_file = out_path / in_file.relative_to(in_path).with_stem(
-                    in_file.stem + out_suffix
-                )
-                logging.info("Output file:     %s", out_file)
-                # create the output directory if it doesn't exist
-                out_file.parent.mkdir(parents=True, exist_ok=True)
-
-                # if the out_file already exists and it's newer than the in_file, skip it
-                if (
-                    not force
-                    and out_file.exists()
-                    and out_file.stat().st_mtime > in_file.stat().st_mtime
-                ):
-                    logging.info("Output file is already up to date")
+        with Progress(
+            SpinnerColumn(),
+            *Progress.get_default_columns(),
+            MofNCompleteColumn(),
+        ) as progress:
+            # loop through sources
+            source_task = progress.add_task(
+                "Sources",
+                total=len(config.sources),
+            )
+            for source_name, source in config.sources.items():
+                logging.info("Processing source: %s", source_name)
+                in_path = Path(source.in_path)
+                out_path = Path(source.out_path)
+                out_suffix = source.out_suffix
+                if not verify_paths(in_path, out_path):
+                    logging.warn("Skipping source %s", source_name)
                     continue
-                # Create a temporary file to save the output
-                temp_out_file: Path = temp_dir / (str(uuid.uuid4()) + ".pdf")
-                # process the file
-                with fitz.open(in_file) as doc:
-                    if not do_authentication(doc, publishers):
-                        logging.warn("Skipping file since no password found")
-                        continue
-                    if not (publisher := choose_publisher(doc, publishers)):
-                        logging.warn("Skipping file since no publisher found")
-                        continue
-
-                    apply_techniques(doc, config, publisher, tech_registry)
-
-                    save_pdf(doc, temp_out_file, debug=debug)
-
-                    apply_post_processing(
-                        in_file, temp_out_file, source, post_process_registry
+                # determine which publishers are in scope for this source
+                publishers = select_publishers(source, config.publishers)
+                # recursively process the input path
+                in_files = list(in_path.glob("**/*.pdf"))
+                files_task = progress.add_task(
+                    "Files",
+                    total=len(in_files),
+                )
+                for in_file in in_files:
+                    logging.info("-" * 80)
+                    logging.info("Processing file: %s", in_file)
+                    # calculate the output path for the file
+                    out_file = out_path / in_file.relative_to(in_path).with_stem(
+                        in_file.stem + out_suffix
                     )
+                    logging.info("Output file:     %s", out_file)
+                    # create the output directory if it doesn't exist
+                    out_file.parent.mkdir(parents=True, exist_ok=True)
 
-                    if dry_run:
-                        logging.warn("Dry run: not saving file %s", out_file)
-                        temp_out_file.unlink()
-                    else:
-                        logging.debug("Saving final output to %s", out_file)
-                        temp_out_file.replace(out_file)
+                    # if the out_file already exists and it's newer than the in_file, skip it
+                    if (
+                        not force
+                        and out_file.exists()
+                        and out_file.stat().st_mtime > in_file.stat().st_mtime
+                    ):
+                        logging.info("Output file is already up to date")
+                        continue
+                    # Create a temporary file to save the output
+                    temp_out_file: Path = temp_dir / (str(uuid.uuid4()) + ".pdf")
+                    # process the file
+                    with fitz.open(in_file) as doc:
+                        if not do_authentication(doc, publishers):
+                            logging.warn("Skipping file since no password found")
+                            continue
+                        if not (publisher := choose_publisher(doc, publishers)):
+                            logging.warn("Skipping file since no publisher found")
+                            continue
+                        apply_techniques(doc, config, publisher, tech_registry)
+                        save_pdf(doc, temp_out_file, debug=debug)
+
+                        apply_post_processing(
+                            in_file, temp_out_file, source, post_process_registry
+                        )
+
+                        if dry_run:
+                            logging.warn("Dry run: not saving file %s", out_file)
+                            temp_out_file.unlink()
+                        else:
+                            logging.debug("Saving final output to %s", out_file)
+                            temp_out_file.replace(out_file)
+                    progress.update(files_task, advance=1)
+                progress.remove_task(files_task)
+                progress.update(source_task, advance=1)
