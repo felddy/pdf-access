@@ -21,13 +21,7 @@ class Source(BaseModel):
     publishers: List[str]
 
 
-class Settings(BaseModel):
-    log_level: str
-    output_level: str
-
-
 class Config(BaseModel):
     plans: Dict[str, Plan]
     publishers: Dict[str, Publisher]
-    settings: Settings
     sources: Dict[str, Source]
