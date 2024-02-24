@@ -115,16 +115,13 @@ def apply_actions(
     Returns True processing should continue.
     Returns False if processing should stop."""
     # Get the list of actions for this plan
-    for action_name in plan.actions:
-        if not (action := config.actions.get(action_name)):
-            logging.warn('Skipping action not found in config: "%s"', action_name)
-            continue
-        if not (action_function := action_registry.get(action.action)):
+    for action in plan.actions:
+        if not (action_function := action_registry.get(action.function)):
             logging.warn(
-                'Skipping action function not found in registry "%s"', action.action
+                'Skipping action function not found in registry "%s"', action.function
             )
             continue
-        logging.info('Running action: "%s"', action_name)
+        logging.info('Running action: "%s"', action.name)
         logging.debug(
             'Calling action "%s" with: %s, %s',
             action_function.nice_name,
@@ -133,7 +130,7 @@ def apply_actions(
         )
         (change_count, should_continue) = action_function.apply(doc=doc, **action.args)
         if not should_continue:
-            logging.warn('Action "%s" signaled to stop processing', action_name)
+            logging.warn('Action "%s" signaled to stop processing', action.name)
             return False
         if change_count:
             logging.debug("Changes made: %s", change_count)

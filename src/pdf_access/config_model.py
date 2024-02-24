@@ -1,19 +1,20 @@
 from typing import Any, Dict, List
 import re
-from pydantic import BaseModel, Extra, Field, validator
+from pydantic import BaseModel, Extra, Field, validator, root_validator
 from pathlib import Path
 
 
 class Action(BaseModel):
-    action: str
     args: Dict[str, Any] = Field(default_factory=dict)
+    function: str
+    name: str
 
     class Config:
         extra = Extra.forbid
 
 
 class Plan(BaseModel):
-    actions: List[str]  # TODO link to action objects
+    actions: List[Action]  # TODO link to action objects
     metadata_search: Dict[str, str]  # TODO precompile regex
     passwords: List[str] = Field(default_factory=list)
     path_regex: re.Pattern = re.compile(".*")
@@ -52,3 +53,26 @@ class Config(BaseModel):
 
     class Config:
         extra = Extra.forbid
+
+    @root_validator(pre=True)
+    def resolve_actions(cls, values):
+        # Extract actions and plans from the values dictionary
+        actions_dict = values.get("actions", {})
+        plans_dict = values.get("plans", {})
+
+        # Iterate over the plans to resolve action names to Action objects
+        for plan_name, plan in plans_dict.items():
+            resolved_actions = []
+            for action_name in plan.get("actions", []):
+                action_obj = actions_dict.get(action_name)
+                if action_obj:
+                    resolved_actions.append(action_obj)
+                else:
+                    raise ValueError(
+                        f"Action '{action_name}' referenced in plan '{plan_name}' does not exist."
+                    )
+            plan["actions"] = (
+                resolved_actions  # Replace action names with resolved Action objects
+            )
+
+        return values
