@@ -7,7 +7,7 @@ import tempfile
 from .. import PostProcessBase
 
 
-class GSCompress(PostProcessBase):
+class GSCompressProcess(PostProcessBase):
     nice_name = "gs-compress"
 
     @classmethod
