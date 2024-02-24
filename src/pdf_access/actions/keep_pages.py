@@ -1,10 +1,10 @@
 # Third-Party Libraries
 import fitz
 
-from .. import TechniqueBase
+from .. import ActionBase
 
 
-class KeepPagesTechnique(TechniqueBase):
+class KeepPagesAction(ActionBase):
     nice_name = "keep-pages"
 
     @classmethod

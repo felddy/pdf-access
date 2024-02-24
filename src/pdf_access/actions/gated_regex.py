@@ -5,10 +5,10 @@ import re
 # Third-Party Libraries
 import fitz
 
-from .. import TechniqueBase
+from .. import ActionBase
 
 
-class GatedRegexTechnique(TechniqueBase):
+class GatedRegexAction(ActionBase):
     nice_name = "gated-regex"
 
     @classmethod

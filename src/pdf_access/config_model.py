@@ -3,16 +3,16 @@ import re
 from pydantic import BaseModel, Field, validator
 
 
-class Plan(BaseModel):
+class Action(BaseModel):
     args: Dict[str, Any] = Field(default_factory=dict)
-    technique: str
+    action: str
 
 
-class Publisher(BaseModel):
+class Plan(BaseModel):
     metadata_search: Dict[str, str]
     path_regex: re.Pattern = re.compile(".*")
     passwords: List[str] = Field(default_factory=list)
-    plans: List[str]
+    actions: List[str]
 
     @validator("path_regex", pre=True)
     def compile_path_regex(cls, v):
@@ -26,10 +26,10 @@ class Source(BaseModel):
     out_path: str
     out_suffix: str = Field("")
     post_process: List[str] = Field(default_factory=list)
-    publishers: List[str]
+    plans: List[str]
 
 
 class Config(BaseModel):
+    actions: Dict[str, Action]
     plans: Dict[str, Plan]
-    publishers: Dict[str, Publisher]
     sources: Dict[str, Source]

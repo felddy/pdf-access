@@ -13,7 +13,7 @@ from rich.logging import RichHandler
 from rich.traceback import install as traceback_install
 from pydantic import ValidationError
 
-from . import Config, PostProcessBase, TechniqueBase, discover_and_register, process
+from . import Config, PostProcessBase, ActionBase, discover_and_register, process
 from ._version import __version__
 
 
@@ -100,11 +100,11 @@ def main() -> None:
     # Read the configuration file
     config = read_config(args.config_file)
 
-    # Discover and register the techniques
-    tech_registry: dict[str, TechniqueBase] = discover_and_register(
-        "techniques", TechniqueBase
+    # Discover and register the actions
+    action_registry: dict[str, ActionBase] = discover_and_register(
+        "actions", ActionBase
     )
-    logging.debug("Techniques: %s", tech_registry.keys())
+    logging.debug("Techniques: %s", action_registry.keys())
 
     # Discover and register the post-processors
     post_process_registry: dict[str, PostProcessBase] = discover_and_register(
@@ -115,7 +115,7 @@ def main() -> None:
     # Process the PDF files
     process(
         config,
-        tech_registry,
+        action_registry,
         post_process_registry,
         debug=args.debug,
         dry_run=args.dry_run,

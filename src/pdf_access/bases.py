@@ -24,10 +24,10 @@ class PostProcessBase(NiceBase):
         )
 
 
-class TechniqueBase(NiceBase):
+class ActionBase(NiceBase):
     # Subclasses should override this with their unique nice name
     nice_name: str
 
     @classmethod
     def apply(self, doc: fitz.Document, **kwargs) -> int:
-        raise NotImplementedError("Each technique must implement the apply method.")
+        raise NotImplementedError("Each action must implement the apply method.")

@@ -4,10 +4,10 @@ import logging
 # Third-Party Libraries
 import fitz
 
-from .. import TechniqueBase
+from .. import ActionBase
 
 
-class ClearEncodingDifferencesTechnique(TechniqueBase):
+class ClearEncodingDifferencesAction(ActionBase):
     nice_name = "clear_encoding_differences"
 
     @classmethod

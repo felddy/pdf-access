@@ -5,10 +5,10 @@ import re
 # Third-Party Libraries
 import fitz
 
-from .. import TechniqueBase
+from .. import ActionBase
 
 
-class ClearStreamTechnique(TechniqueBase):
+class ClearStreamAction(ActionBase):
     nice_name = "clear-stream"
 
     @classmethod

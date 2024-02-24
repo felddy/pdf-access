@@ -10,7 +10,7 @@ import uuid
 import fitz
 from rich.progress import Progress, SpinnerColumn, MofNCompleteColumn
 
-from . import PostProcessBase, TechniqueBase, Config, Source, Publisher
+from . import PostProcessBase, ActionBase, Config, Source, Plan
 
 
 def verify_paths(in_path: Path, out_path: Path) -> bool:
@@ -23,65 +23,57 @@ def verify_paths(in_path: Path, out_path: Path) -> bool:
     return True
 
 
-def do_authentication(doc: fitz.Document, publishers: Dict[str, Publisher]) -> bool:
-    """Attempt to authenticate the document using the passwords for the publishers."""
+def do_authentication(doc: fitz.Document, plans: Dict[str, Plan]) -> bool:
+    """Attempt to authenticate the document using the passwords for the plans."""
     if not doc.is_encrypted:
         logging.debug("Document is not encrypted")
         return True
     logging.info("Password required. Attempting to authenticate")
 
-    for publisher_name, publisher in publishers.items():
-        for password in publisher.passwords:
-            logging.debug("Attempting password for %s", publisher_name)
+    for plan_name, plan in plans.items():
+        for password in plan.passwords:
+            logging.debug("Attempting password for %s", plan_name)
             if doc.authenticate(password):
-                logging.info("Authenticated with password for %s", publisher_name)
+                logging.info("Authenticated with password for %s", plan_name)
                 return True
     return False
 
 
-def select_publishers(
-    source: Source, publishers: Dict[str, Publisher]
-) -> Dict[str, Publisher]:
-    # If the source defines publishers, use them; otherwise, use all
-    if len(source.publishers) == 0:
-        logging.debug("All publishers are in scope for this source")
-        return publishers
-    # select the publishers that are in scope for this source
-    selected_publishers = {
-        key: value for key, value in publishers.items() if key in source.publishers
-    }
-    logging.debug(
-        "Publishers in scope for this source: %s", ", ".join(selected_publishers)
-    )
-    return selected_publishers
+def select_plans(source: Source, plans: Dict[str, Plan]) -> Dict[str, Plan]:
+    # If the source defines plans, use them; otherwise, use all
+    if len(source.plans) == 0:
+        logging.debug("All plans are in scope for this source")
+        return plans
+    # select the plans that are in scope for this source
+    selected_plans = {key: value for key, value in plans.items() if key in source.plans}
+    logging.debug("Plans in scope for this source: %s", ", ".join(selected_plans))
+    return selected_plans
 
 
-def choose_publisher(
-    doc: fitz.Document, publishers: Dict[str, Publisher]
-) -> Optional[Dict[str, Publisher]]:
-    """Check the metadata to determine the publisher of the document."""
+def choose_plan(
+    doc: fitz.Document, plans: Dict[str, Plan]
+) -> Optional[Dict[str, Plan]]:
+    """Check the metadata to determine the plan of the document."""
     logging.debug("Metadata: %s", doc.metadata)
-    for publisher_name, publisher in publishers.items():
+    for plan_name, plan in plans.items():
         matches_failed = False
-        logging.debug('Evaluating publisher: "%s"', publisher_name)
+        logging.debug('Evaluating plan: "%s"', plan_name)
         # Check to see if filename matches the path_regex
-        if not re.search(publisher.path_regex, doc.name):
+        if not re.search(plan.path_regex, doc.name):
             logging.debug(
                 'Path regex "%s" does not match: "%s"',
-                publisher.path_regex.pattern,
+                plan.path_regex.pattern,
                 doc.name,
             )
             matches_failed = True
             continue
         else:
             logging.debug(
-                'Path regex "%s" matches: "%s"', publisher.path_regex.pattern, doc.name
+                'Path regex "%s" matches: "%s"', plan.path_regex.pattern, doc.name
             )
-        for field, regex in publisher.metadata_search.items():
+        for field, regex in plan.metadata_search.items():
             if matches_failed:
-                logging.debug(
-                    'Search failure occurred, skipping publisher: "%s"', publisher_name
-                )
+                logging.debug('Search failure occurred, skipping plan: "%s"', plan_name)
                 break
             logging.debug('Searching field "%s" for regex "%s"', field, regex)
             if field not in doc.metadata:
@@ -104,30 +96,30 @@ def choose_publisher(
                 doc.metadata[field],
             )
         if not matches_failed:
-            logging.debug('All metadata regexes matched for "%s"', publisher_name)
-            return publisher
-    logging.debug("No publishers matched")
+            logging.debug('All metadata regexes matched for "%s"', plan_name)
+            return plan
+    logging.debug("No plans matched")
     return None
 
 
-def apply_techniques(
+def apply_actions(
     doc: fitz.Document,
     config: Config,
-    publisher: Dict[str, Any],
-    tech_registry: dict[str, TechniqueBase],
+    plan: Plan,
+    action_registry: dict[str, ActionBase],
 ) -> None:
-    # Get the list of plans for this publisher
-    for plan_name in publisher.plans:
-        if not (plan := config.plans.get(plan_name)):
-            logging.warn('Skipping unknown plan "%s"', plan_name)
+    # Get the list of actions for this plan
+    for action_name in plan.actions:
+        if not (action := config.actions.get(action_name)):
+            logging.warn('Skipping unknown action "%s"', action_name)
             continue
-        if not (tech_function := tech_registry.get(plan.technique)):
-            logging.warn('Skipping unknown technique "%s"', plan)
+        if not (action_function := action_registry.get(action.action)):
+            logging.warn('Skipping unknown action "%s"', action)
             continue
-        logging.info("Running plan: %s", plan_name)
-        logging.info("Applying technique: %s", tech_function.nice_name)
-        logging.debug("Calling technique with: %s, %s", doc, plan.args)
-        change_count = tech_function.apply(doc=doc, **plan.args)
+        logging.info("Running action: %s", action_name)
+        logging.info("Applying action: %s", action_function.nice_name)
+        logging.debug("Calling action with: %s, %s", doc, action.args)
+        change_count = action_function.apply(doc=doc, **action.args)
         if change_count:
             logging.debug("Changes made: %s", change_count)
         else:
@@ -150,7 +142,7 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
         )
     else:
         logging.debug("Saving optimized file to %s", out_file)
-        # TODO move scrub to technique
+        # TODO move scrub to action
         doc.scrub(
             attached_files=True,
             clean_pages=True,
@@ -197,7 +189,7 @@ def apply_post_processing(
 
 def process(
     config: Config,
-    tech_registry: dict[str, TechniqueBase],
+    action_registry: dict[str, ActionBase],
     post_process_registry: dict[str, PostProcessBase],
     debug: bool = False,
     dry_run: bool = False,
@@ -233,8 +225,8 @@ def process(
                     if source_task:
                         progress.update(source_task, advance=1)
                     continue
-                # determine which publishers are in scope for this source
-                publishers = select_publishers(source, config.publishers)
+                # determine which plans are in scope for this source
+                plans = select_plans(source, config.plans)
                 # recursively process the input path
                 in_files = list(in_path.glob("**/*.pdf"))
                 files_task = progress.add_task(
@@ -263,15 +255,15 @@ def process(
                     temp_out_file: Path = temp_dir / (str(uuid.uuid4()) + ".pdf")
                     # process the file
                     with fitz.open(in_file) as doc:
-                        if not do_authentication(doc, publishers):
+                        if not do_authentication(doc, plans):
                             logging.warn("Skipping file since no password found")
                             progress.update(files_task, advance=1)
                             continue
-                        if not (publisher := choose_publisher(doc, publishers)):
-                            logging.warn("Skipping file since no publisher found")
+                        if not (plan := choose_plan(doc, plans)):
+                            logging.warn("Skipping file since no plan found")
                             progress.update(files_task, advance=1)
                             continue
-                        apply_techniques(doc, config, publisher, tech_registry)
+                        apply_actions(doc, config, plan, action_registry)
                         save_pdf(doc, temp_out_file, debug=debug)
 
                         apply_post_processing(

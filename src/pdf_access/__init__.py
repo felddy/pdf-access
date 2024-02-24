@@ -5,19 +5,19 @@
 # package_name.__version__, which is used to get version information about this
 # Python package.
 from ._version import __version__  # noqa: F401
-from .bases import NiceBase, PostProcessBase, TechniqueBase
-from .config_model import Config, Plan, Publisher, Source
+from .bases import ActionBase, NiceBase, PostProcessBase
+from .config_model import Action, Config, Plan, Source
 from .process import process
 from .registry import discover_and_register
 
 __all__ = [
+    "Action",
     "Config",
     "discover_and_register",
     "NiceBase",
     "Plan",
     "PostProcessBase",
     "process",
-    "Publisher",
     "Source",
-    "TechniqueBase",
+    "ActionBase",
 ]
