@@ -11,7 +11,7 @@ from .. import ActionBase
 class ClearEncodingDifferencesAction(ActionBase):
     """Clear differences in encoding objects."""
 
-    nice_name = "clear_encoding_differences"
+    nice_name = "clear-encoding-differences"
 
     @classmethod
     def apply(cls, doc: fitz.Document) -> Tuple[int, bool]:
