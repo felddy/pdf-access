@@ -2,16 +2,16 @@
 import logging
 from pathlib import Path
 import re
-from typing import Any, Dict, Optional
 import tempfile
+from typing import Any, Dict, Optional
 import uuid
 
 # Third-Party Libraries
 import fitz
 import humanize
-from rich.progress import Progress, SpinnerColumn, MofNCompleteColumn
+from rich.progress import MofNCompleteColumn, Progress, SpinnerColumn
 
-from . import PostProcessBase, ActionBase, Config, Source, Plan
+from . import ActionBase, Config, Plan, PostProcessBase, Source
 
 
 def verify_paths(in_path: Path, out_path: Path) -> bool:

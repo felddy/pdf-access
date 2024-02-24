@@ -1,7 +1,10 @@
-from typing import Any, Dict, List
-import re
-from pydantic import BaseModel, Extra, Field, validator, root_validator
+# Standard Python Libraries
 from pathlib import Path
+import re
+from typing import Any, Dict, List
+
+# Third-Party Libraries
+from pydantic import BaseModel, Extra, Field, root_validator, validator
 
 
 class Action(BaseModel):
@@ -77,8 +80,8 @@ class Config(BaseModel):
                     raise ValueError(
                         f"Action '{action_name}' referenced in plan '{plan_name}' does not exist."
                     )
-            plan["actions"] = (
-                resolved_actions  # Replace action names with resolved Action objects
-            )
+            plan[
+                "actions"
+            ] = resolved_actions  # Replace action names with resolved Action objects
 
         return values

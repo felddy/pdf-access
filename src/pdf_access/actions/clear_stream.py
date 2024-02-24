@@ -1,6 +1,6 @@
 # Standard Python Libraries
-from typing import Tuple
 import re
+from typing import Tuple
 
 # Third-Party Libraries
 import fitz

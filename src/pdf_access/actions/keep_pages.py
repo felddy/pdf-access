@@ -1,6 +1,8 @@
+# Standard Python Libraries
+from typing import Tuple
+
 # Third-Party Libraries
 import fitz
-from typing import Tuple
 
 from .. import ActionBase
 

@@ -1,7 +1,7 @@
 # Standard Python Libraries
 import logging
 from pathlib import Path
-from subprocess import run, CompletedProcess, PIPE, STDOUT
+from subprocess import PIPE, STDOUT, CompletedProcess, run
 import tempfile
 
 from .. import PostProcessBase
