@@ -187,6 +187,20 @@ def apply_post_processing(
         post_processor.apply(in_path=in_file, out_path=out_file)
 
 
+def size_report(in_path: Path, out_path: Path):
+    # report the change in size with humanize
+    in_size = in_path.stat().st_size
+    out_size = out_path.stat().st_size
+    percent = (out_size - in_size) / in_size * 100.0
+    logging.info(
+        "Size change: %s -> %s (%s) %.2f%%",
+        humanize.naturalsize(in_size, binary=True),
+        humanize.naturalsize(out_size, binary=True),
+        humanize.naturalsize(out_size - in_size, binary=True),
+        percent,
+    )
+
+
 def process(
     config: Config,
     action_registry: dict[str, ActionBase],
@@ -269,6 +283,8 @@ def process(
                         apply_post_processing(
                             in_file, temp_out_file, source, post_process_registry
                         )
+
+                        size_report(in_file, temp_out_file)
 
                         if dry_run:
                             logging.info("Dry run: not saving file %s", out_file)
