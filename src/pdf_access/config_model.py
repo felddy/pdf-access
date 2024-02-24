@@ -14,8 +14,8 @@ class Action(BaseModel):
 
 
 class Plan(BaseModel):
-    actions: List[Action]  # TODO link to action objects
-    metadata_search: Dict[str, str]  # TODO precompile regex
+    actions: List[Action]
+    metadata_search: Dict[str, re.Pattern]
     passwords: List[str] = Field(default_factory=list)
     path_regex: re.Pattern = re.compile(".*")
     post_process: List[str] = Field(default_factory=list)
@@ -24,6 +24,12 @@ class Plan(BaseModel):
     def compile_path_regex(cls, v):
         if isinstance(v, str):
             return re.compile(v)
+        return v
+
+    @validator("metadata_search", pre=True)
+    def compile_metadata_search(cls, v):
+        if isinstance(v, dict):
+            return {k: re.compile(v) for k, v in v.items()}
         return v
 
     class Config:

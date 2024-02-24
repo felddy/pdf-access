@@ -76,15 +76,15 @@ def choose_plan(
             if matches_failed:
                 logging.debug('Search failure occurred, skipping plan: "%s"', plan_name)
                 break
-            logging.debug('Searching field "%s" for regex "%s"', field, regex)
+            logging.debug('Searching field "%s" for regex "%s"', field, regex.pattern)
             if field not in doc.metadata:
                 logging.debug('Metadata field not found: "%s"', field)
                 matches_failed = True
                 continue
-            if not re.search(regex, doc.metadata[field]):
+            if not regex.search(doc.metadata[field]):
                 logging.debug(
                     'Metadata regex "%s" does not match: {"%s": "%s"}',
-                    regex,
+                    regex.pattern,
                     field,
                     doc.metadata[field],
                 )
