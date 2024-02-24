@@ -1,23 +1,31 @@
 from typing import Any, Dict, List
-from pydantic import BaseModel, Field
+import re
+from pydantic import BaseModel, Field, validator
 
 
 class Plan(BaseModel):
-    args: Dict[str, Any] = Field(dict())
+    args: Dict[str, Any] = Field(default_factory=dict)
     technique: str
 
 
 class Publisher(BaseModel):
     metadata_search: Dict[str, str]
-    passwords: List[str] = Field(list())
+    path_regex: re.Pattern = re.compile(".*")
+    passwords: List[str] = Field(default_factory=list)
     plans: List[str]
+
+    @validator("path_regex", pre=True)
+    def compile_path_regex(cls, v):
+        if isinstance(v, str):
+            return re.compile(v)
+        return v
 
 
 class Source(BaseModel):
     in_path: str
     out_path: str
     out_suffix: str = Field("")
-    post_process: List[str] = Field(list())
+    post_process: List[str] = Field(default_factory=list)
     publishers: List[str]
 
 
