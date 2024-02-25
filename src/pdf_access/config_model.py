@@ -4,7 +4,7 @@ import re
 from typing import Any, Dict, List
 
 # Third-Party Libraries
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class Action(BaseModel):
@@ -23,17 +23,27 @@ class Plan(BaseModel):
     path_regex: re.Pattern = re.compile(".*")
     post_process: List[str] = Field(default_factory=list)
 
-    @validator("path_regex", pre=True)
-    def compile_path_regex(cls, v):
-        if isinstance(v, str):
-            return re.compile(v)
-        return v
+    @field_validator("path_regex", mode="before")
+    def compile_path_regex(cls, value: Any) -> re.Pattern[str]:
+        if isinstance(value, str):
+            return re.compile(value)
+        elif isinstance(value, re.Pattern):
+            return value
+        else:
+            # Handle other unexpected types, or raise an exception
+            raise ValueError(
+                "Unexpected type for 'path_regex'. Expected 'str' or compiled regex pattern."
+            )
 
-    @validator("metadata_search", pre=True)
-    def compile_metadata_search(cls, v):
-        if isinstance(v, dict):
-            return {k: re.compile(v) for k, v in v.items()}
-        return v
+    @field_validator("metadata_search", mode="before")
+    def compile_metadata_regexes(cls, value: Any) -> Dict[str, re.Pattern[str]]:
+        if isinstance(value, dict):
+            return {k: re.compile(v) for k, v in value.items()}
+        else:
+            # Handle other unexpected types, or raise an exception
+            raise ValueError(
+                "Unexpected type for 'metadata_search'. Expected 'dict' with 'str' keys and 'str' values."
+            )
 
     class Config:
         extra = "forbid"
@@ -45,11 +55,15 @@ class Source(BaseModel):
     out_suffix: str = Field("")
     plans: List[str]
 
-    @validator("in_path", "out_path")
-    def convert_to_path(cls, v):
-        if isinstance(v, str):
-            return Path(v)
-        return v
+    @field_validator("in_path", "out_path", mode="before")
+    def compile_path_regex(cls, value: Any) -> Path:
+        if isinstance(value, str):
+            return Path(value)
+        elif isinstance(value, Path):
+            return value
+        else:
+            # Handle other unexpected types, or raise an exception
+            raise ValueError("Unexpected type. Expected 'str' or 'Path'.")
 
     class Config:
         extra = "forbid"
@@ -63,8 +77,8 @@ class Config(BaseModel):
     class Config:
         extra = "forbid"
 
-    @root_validator(pre=True)
-    def resolve_actions(cls, values):
+    @model_validator(mode="before")
+    def resolve_actions(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         # Extract actions and plans from the values dictionary
         actions_dict = values.get("actions", {})
         plans_dict = values.get("plans", {})
