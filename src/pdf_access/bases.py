@@ -19,7 +19,7 @@ class PostProcessBase(NiceBase):
     nice_name: str
 
     @classmethod
-    def apply(self, in_path: Path, out_path: Path, **kwargs: Any):
+    def apply(self, in_path: Path, out_path: Path, **kwargs: Any) -> None:
         raise NotImplementedError(
             "Each post processor must implement the apply method."
         )
