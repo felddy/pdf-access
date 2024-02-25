@@ -51,9 +51,7 @@ def select_plans(source: Source, plans: Dict[str, Plan]) -> Dict[str, Plan]:
     return selected_plans
 
 
-def choose_plan(
-    doc: fitz.Document, plans: Dict[str, Plan]
-) -> Optional[Dict[str, Plan]]:
+def choose_plan(doc: fitz.Document, plans: Dict[str, Plan]) -> Optional[Plan]:
     """Check the metadata to determine the plan of the document."""
     logging.debug("Metadata: %s", doc.metadata)
     for plan_name, plan in plans.items():
@@ -108,7 +106,7 @@ def apply_actions(
     doc: fitz.Document,
     config: Config,
     plan: Plan,
-    action_registry: dict[str, ActionBase],
+    action_registry: dict[str, type[ActionBase]],
 ) -> bool:
     """Apply the actions from the plan to the document.
 
@@ -186,7 +184,7 @@ def apply_post_processing(
     in_file: Path,
     out_file: Path,
     plan: Plan,
-    post_process_registry: Dict[str, PostProcessBase],
+    post_process_registry: Dict[str, type[PostProcessBase]],
 ):
     # loop through post-processors
     for post_processor_name in plan.post_process:
@@ -216,8 +214,8 @@ def size_report(in_path: Path, out_path: Path):
 
 def process(
     config: Config,
-    action_registry: dict[str, ActionBase],
-    post_process_registry: dict[str, PostProcessBase],
+    action_registry: dict[str, type[ActionBase]],
+    post_process_registry: dict[str, type[PostProcessBase]],
     debug: bool = False,
     dry_run: bool = False,
     force: bool = False,
@@ -230,8 +228,8 @@ def process(
         "s" if len(config.sources) != 1 else "",
         ",".join(config.sources),
     )
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir: Path = Path(temp_dir)
+    with tempfile.TemporaryDirectory() as temp_dir_context:
+        temp_dir: Path = Path(temp_dir_context)
         with Progress(
             SpinnerColumn(),
             *Progress.get_default_columns(),
