@@ -1,6 +1,6 @@
 # Standard Python Libraries
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Tuple
 
 # Third-Party Libraries
 import fitz
@@ -19,7 +19,7 @@ class PostProcessBase(NiceBase):
     nice_name: str
 
     @classmethod
-    def apply(self, in_path: Path, out_path: Path, **kwargs):
+    def apply(self, in_path: Path, out_path: Path, **kwargs: Any):
         raise NotImplementedError(
             "Each post processor must implement the apply method."
         )
@@ -30,6 +30,6 @@ class ActionBase(NiceBase):
     nice_name: str
 
     @classmethod
-    def apply(self, doc: fitz.Document, **kwargs) -> Tuple[int, bool]:
+    def apply(self, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:
         # Return a tuple of the number of changes made, and whether processing should continue
         raise NotImplementedError("Each action must implement the apply method.")
