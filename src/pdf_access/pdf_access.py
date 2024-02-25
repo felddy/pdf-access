@@ -45,32 +45,53 @@ def read_config(config_file: str) -> Config:
         sys.exit(1)
 
 
-def print_id_tables(action_registry, post_process_registry):
-    console = Console()
-
-    # Table for Actions
-    action_table = Table(
-        show_header=True, header_style="bold magenta", row_styles=["none", "dim"]
+def get_registries():
+    # Discover and register the actions
+    action_registry: dict[str, type[ActionBase]] = discover_and_register(
+        "actions", ActionBase
     )
-    action_table.add_column("Action")
-    action_table.add_column("Description")
+    logging.debug("Techniques: %s", action_registry.keys())
 
-    for k, v in action_registry.items():
-        action_table.add_row(k, v.__doc__ or "No description available")
-
-    console.print(action_table)
-
-    # Table for Post-processors
-    post_processor_table = Table(
-        show_header=True, header_style="bold magenta", row_styles=["none", "dim"]
+    # Discover and register the post-processors
+    post_process_registry: dict[str, type[PostProcessBase]] = discover_and_register(
+        "post_process", PostProcessBase
     )
-    post_processor_table.add_column("Post-Processor")
-    post_processor_table.add_column("Description")
+    logging.debug("Post-processors: %s", post_process_registry.keys())
+    return action_registry, post_process_registry
 
-    for k, v in post_process_registry.items():
-        post_processor_table.add_row(k, v.__doc__ or "No description available")
 
-    console.print(post_processor_table)
+class PrintConfTable(argparse.Action):
+    def __init__(self, option_strings, dest, nargs=0, **kwargs):
+        super().__init__(option_strings, dest, nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        console = Console()
+        action_registry, post_process_registry = get_registries()
+
+        # Table for Actions
+        action_table = Table(
+            show_header=True, header_style="bold magenta", row_styles=["none", "dim"]
+        )
+        action_table.add_column("Action")
+        action_table.add_column("Description")
+
+        for k, v in action_registry.items():
+            action_table.add_row(k, v.__doc__ or "No description available")
+
+        console.print(action_table)
+
+        # Table for Post-processors
+        post_processor_table = Table(
+            show_header=True, header_style="bold magenta", row_styles=["none", "dim"]
+        )
+        post_processor_table.add_column("Post-Processor")
+        post_processor_table.add_column("Description")
+
+        for k, v in post_process_registry.items():
+            post_processor_table.add_row(k, v.__doc__ or "No description available")
+
+        console.print(post_processor_table)
+        parser.exit()
 
 
 def main() -> None:
@@ -101,16 +122,19 @@ def main() -> None:
         default="info",
     )
     parser.add_argument(
+        "--show-ids",
+        "-s",
+        help="display action and post-process id tables and exit.",
+        action=PrintConfTable,
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         help="increase verbosity (shortcut for --log-level debug)",
         action="store_true",
     )
     parser.add_argument(
-        "--dump-ids",
-        "-i",
-        help="dump action and post-process ids, then exit.",
-        action="store_true",
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
     args = parser.parse_args()
@@ -137,21 +161,7 @@ def main() -> None:
     # Read the configuration file
     config = read_config(args.config_file)
 
-    # Discover and register the actions
-    action_registry: dict[str, type[ActionBase]] = discover_and_register(
-        "actions", ActionBase
-    )
-    logging.debug("Techniques: %s", action_registry.keys())
-
-    # Discover and register the post-processors
-    post_process_registry: dict[str, type[PostProcessBase]] = discover_and_register(
-        "post_process", PostProcessBase
-    )
-    logging.debug("Post-processors: %s", post_process_registry.keys())
-
-    if args.dump_ids:
-        print_id_tables(action_registry, post_process_registry)
-        sys.exit(0)
+    action_registry, post_process_registry = get_registries()
 
     # Process the PDF files
     process(
