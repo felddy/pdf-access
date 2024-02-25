@@ -5,12 +5,8 @@ from typing import Any, Dict, Tuple
 
 # Third-Party Libraries
 import fitz
-from pydantic import (
-    BaseModel,
-    ValidationError,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, ValidationError, field_validator, model_validator
+
 from .. import ActionBase
 
 
