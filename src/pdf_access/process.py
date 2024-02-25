@@ -161,7 +161,7 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
             embedded_files=True,
             hidden_text=True,
             javascript=True,
-            metadata=True,
+            metadata=False,
             redactions=True,
             redact_images=0,
             remove_links=True,
@@ -172,12 +172,12 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
         )
         doc.save(
             out_file,
-            garbage=4,
-            deflate=True,
-            deflate_images=True,
-            deflate_fonts=True,
-            linear=True,
             clean=True,
+            deflate_fonts=True,
+            deflate_images=True,
+            deflate=True,
+            garbage=4,
+            linear=True,
         )
 
 
@@ -229,6 +229,8 @@ def process(
         "s" if len(config.sources) != 1 else "",
         ",".join(config.sources),
     )
+    if force:
+        logging.warn("Force mode is enabled.  Timestamps will be ignored.")
     with tempfile.TemporaryDirectory() as temp_dir_context:
         temp_dir: Path = Path(temp_dir_context)
         with Progress(
