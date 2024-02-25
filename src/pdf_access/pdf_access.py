@@ -50,13 +50,13 @@ def get_registries():
     action_registry: dict[str, type[ActionBase]] = discover_and_register(
         "actions", ActionBase
     )
-    logging.debug("Techniques: %s", action_registry.keys())
+    logging.debug("Registered actions: %s", action_registry.keys())
 
     # Discover and register the post-processors
     post_process_registry: dict[str, type[PostProcessBase]] = discover_and_register(
         "post_process", PostProcessBase
     )
-    logging.debug("Post-processors: %s", post_process_registry.keys())
+    logging.debug("Registered post-processors: %s", post_process_registry.keys())
     return action_registry, post_process_registry
 
 
