@@ -40,7 +40,7 @@ class DetectTextActionArgs(BaseModel):
 
 
 class DetectTextAction(ActionBase):
-    """Detect text matching a regular expression."""
+    """Detect text in pages and metadata matching a regular expression."""
 
     nice_name = "detect-text"
 
@@ -52,11 +52,20 @@ class DetectTextAction(ActionBase):
             print(f"Error validating arguments: {e}")
             return (0, False)
         found_text: bool = False
+        # Search text on pages
         for page in doc:
             text = page.get_text()
             if args.regex.search(text):
                 if args.stop_if_found:
                     logging.warning("Text found on page %s", page.number + 1)
+                found_text = True
+        # Search text in metadata
+        for key, value in doc.metadata.items():
+            if not value:
+                continue
+            if args.regex.search(value):
+                if args.stop_if_found:
+                    logging.warning('Text found in metadata key: "%s"', key)
                 found_text = True
         if found_text and args.stop_if_found:
             return (1, False)
