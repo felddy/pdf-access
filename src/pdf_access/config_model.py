@@ -4,7 +4,7 @@ import re
 from typing import Any, Dict, List
 
 # Third-Party Libraries
-from pydantic import BaseModel, Extra, Field, root_validator, validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 
 class Action(BaseModel):
@@ -13,7 +13,7 @@ class Action(BaseModel):
     name: str
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
 
 
 class Plan(BaseModel):
@@ -36,7 +36,7 @@ class Plan(BaseModel):
         return v
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
 
 
 class Source(BaseModel):
@@ -52,7 +52,7 @@ class Source(BaseModel):
         return v
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
 
 
 class Config(BaseModel):
@@ -61,7 +61,7 @@ class Config(BaseModel):
     sources: Dict[str, Source]
 
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
 
     @root_validator(pre=True)
     def resolve_actions(cls, values):
