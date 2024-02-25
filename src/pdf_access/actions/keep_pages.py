@@ -1,5 +1,4 @@
 # Standard Python Libraries
-import re
 from typing import Any, List, Tuple
 
 # Third-Party Libraries
