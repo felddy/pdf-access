@@ -40,7 +40,7 @@ def do_authentication(doc: fitz.Document, plans: Dict[str, Plan]) -> bool:
     return False
 
 
-def select_plans(source: Source, plans: Dict[str, Plan]) -> Dict[str, Plan]:
+def select_plans_for_source(source: Source, plans: Dict[str, Plan]) -> Dict[str, Plan]:
     # If the source defines plans, use them; otherwise, use all
     if len(source.plans) == 0:
         logging.debug("All plans are in scope for this source")
@@ -51,7 +51,7 @@ def select_plans(source: Source, plans: Dict[str, Plan]) -> Dict[str, Plan]:
     return selected_plans
 
 
-def choose_plan(doc: fitz.Document, plans: Dict[str, Plan]) -> Optional[Plan]:
+def select_plan_for_doc(doc: fitz.Document, plans: Dict[str, Plan]) -> Optional[Plan]:
     """Check the metadata to determine the plan of the document."""
     logging.debug("Metadata: %s", doc.metadata)
     for plan_name, plan in plans.items():
@@ -97,6 +97,8 @@ def choose_plan(doc: fitz.Document, plans: Dict[str, Plan]) -> Optional[Plan]:
         if not matches_failed:
             logging.debug("All metadata regexes matched.")
             logging.info('Selected plan: "%s"', plan_name)
+            if plan.comment:
+                logging.info('Plan comment: "%s"', plan.comment)
             return plan
     logging.debug("No plans matched")
     return None
@@ -104,7 +106,6 @@ def choose_plan(doc: fitz.Document, plans: Dict[str, Plan]) -> Optional[Plan]:
 
 def apply_actions(
     doc: fitz.Document,
-    config: Config,
     plan: Plan,
     action_registry: dict[str, type[ActionBase]],
 ) -> bool:
@@ -256,7 +257,7 @@ def process(
                         progress.update(source_task, advance=1)
                     continue
                 # determine which plans are in scope for this source
-                plans = select_plans(source, config.plans)
+                plans = select_plans_for_source(source, config.plans)
                 # recursively process the input path
                 in_files = list(in_path.glob("**/*.pdf"))
                 files_task = progress.add_task(
@@ -289,11 +290,11 @@ def process(
                             logging.warn("Skipping file since no password found")
                             progress.update(files_task, advance=1)
                             continue
-                        if not (plan := choose_plan(doc, plans)):
+                        if not (plan := select_plan_for_doc(doc, plans)):
                             logging.warn("Skipping file since no plan found")
                             progress.update(files_task, advance=1)
                             continue
-                        if not apply_actions(doc, config, plan, action_registry):
+                        if not apply_actions(doc, plan, action_registry):
                             logging.warn("Skipping file since an action failed")
                             progress.update(files_task, advance=1)
                             continue

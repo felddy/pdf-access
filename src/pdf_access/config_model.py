@@ -18,6 +18,7 @@ class Action(BaseModel):
 
 class Plan(BaseModel):
     actions: List[Action]
+    comment: str = ""
     metadata_search: Dict[str, re.Pattern]
     passwords: List[str] = Field(default_factory=list)
     path_regex: re.Pattern = re.compile(".*")
@@ -94,8 +95,8 @@ class Config(BaseModel):
                     raise ValueError(
                         f"Action '{action_name}' referenced in plan '{plan_name}' does not exist."
                     )
-            plan[
-                "actions"
-            ] = resolved_actions  # Replace action names with resolved Action objects
+            plan["actions"] = (
+                resolved_actions  # Replace action names with resolved Action objects
+            )
 
         return values
