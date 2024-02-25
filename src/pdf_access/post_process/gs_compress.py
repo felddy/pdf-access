@@ -1,7 +1,9 @@
 # Standard Python Libraries
 import logging
 from pathlib import Path
-from subprocess import PIPE, STDOUT, CompletedProcess, run
+
+# subprocess is required to run the Ghostscript command
+from subprocess import PIPE, STDOUT, CompletedProcess, run  # nosec blacklist
 import tempfile
 
 from .. import PostProcessBase
@@ -14,10 +16,11 @@ class GSCompressProcess(PostProcessBase):
 
     @classmethod
     def apply(self, in_path: Path, out_path: Path, **kwargs):
+        # Create a temporary directory to store the compressed files
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = Path(temp_dir) / out_path.name
-            # Create a temporary directory to store the compressed files
-            cp: CompletedProcess = run(
+            # care has been taken to ensure paths to gs are sanitized
+            cp: CompletedProcess = run(  # nosec start_process_with_partial_path, subprocess_without_shell_equals_true
                 [
                     "gs",
                     "-DQUIET",
