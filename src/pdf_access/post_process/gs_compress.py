@@ -6,6 +6,9 @@ from pathlib import Path
 from subprocess import PIPE, STDOUT, CompletedProcess, run  # nosec blacklist
 import tempfile
 
+# Third-Party Libraries
+import fitz
+
 from .. import PostProcessBase
 
 
@@ -15,7 +18,12 @@ class GSCompressProcess(PostProcessBase):
     nice_name = "gs-compress"
 
     @classmethod
-    def apply(self, in_path: Path, out_path: Path, **kwargs):
+    def apply(self, in_path: Path, out_path: Path, **kwargs) -> None:
+        # save meta-data
+        with fitz.open(in_path) as doc:
+            saved_metadata = doc.metadata
+            logging.debug("Saved metadata: %s", saved_metadata)
+
         # Create a temporary directory to store the compressed files
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = Path(temp_dir) / out_path.name
@@ -27,6 +35,7 @@ class GSCompressProcess(PostProcessBase):
                     "-dNOPAUSE",
                     "-dBATCH",
                     "-sDEVICE=pdfwrite",
+                    "-dKeepInfo",
                     "-sOutputFile=" + str(temp_file),
                     "-f",
                     out_path,
@@ -38,4 +47,11 @@ class GSCompressProcess(PostProcessBase):
             if cp.returncode:
                 logging.error("Ghostscript failed to compress %s", in_path)
             else:
+                # apply original meta-data
+                if saved_metadata:
+                    logging.debug("Applying saved metadata")
+                    with fitz.open(temp_file) as doc:
+                        doc.set_metadata(saved_metadata)
+                        doc.saveIncr()
+                # replace the original file with the compressed file
                 temp_file.replace(out_path)
