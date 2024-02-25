@@ -1,11 +1,18 @@
 # Standard Python Libraries
 import logging
-from typing import Tuple
+from typing import Any, Tuple
 
 # Third-Party Libraries
 import fitz
+from pydantic import BaseModel, ValidationError
 
 from .. import ActionBase
+
+
+class ClearEncodingDifferencesActionArgs(BaseModel):
+    # No fields
+    class Config:
+        extra = "forbid"
 
 
 class ClearEncodingDifferencesAction(ActionBase):
@@ -14,7 +21,12 @@ class ClearEncodingDifferencesAction(ActionBase):
     nice_name = "clear-encoding-differences"
 
     @classmethod
-    def apply(cls, doc: fitz.Document) -> Tuple[int, bool]:
+    def apply(cls, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:
+        try:
+            ClearEncodingDifferencesActionArgs(**kwargs)
+        except ValidationError as e:
+            print(f"Error validating arguments: {e}")
+            return (0, False)
         change_count = 0
         for xref_num in range(1, doc.xref_length()):
             stream_keys = doc.xref_get_keys(xref_num)
