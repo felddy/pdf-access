@@ -5,7 +5,7 @@ from typing import Any, List, Tuple
 
 # Third-Party Libraries
 import fitz
-from pydantic import BaseModel, ValidationError, field_validator, model_validator
+from pydantic import BaseModel, ValidationError, field_validator
 
 from .. import ActionBase
 
