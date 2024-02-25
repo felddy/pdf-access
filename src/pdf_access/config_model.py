@@ -95,8 +95,6 @@ class Config(BaseModel):
                     raise ValueError(
                         f"Action '{action_name}' referenced in plan '{plan_name}' does not exist."
                     )
-            plan["actions"] = (
-                resolved_actions  # Replace action names with resolved Action objects
-            )
-
+            # Replace action names with resolved Action objects
+            plan["actions"] = resolved_actions
         return values
