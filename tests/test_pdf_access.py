@@ -34,7 +34,7 @@ def test_stdout_version(capsys):
             pdf_access.pdf_access.main()
     captured = capsys.readouterr()
     assert (
-        captured.out == f"{PROJECT_VERSION}\n"
+        captured.out == f"bogus {PROJECT_VERSION}\n"
     ), "standard output by '--version' should agree with module.__version__"
 
 
