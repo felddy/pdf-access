@@ -8,13 +8,23 @@ import sys
 from unittest.mock import patch
 
 # Third-Party Libraries
-import pdf_access
 import pytest
 
+# Project Libraries
+import pdf_access
 
 # define sources of version strings
 RELEASE_TAG = os.getenv("RELEASE_TAG")
 PROJECT_VERSION = pdf_access.__version__
+
+# define log levels
+log_levels = (
+    "debug",
+    "info",
+    "warning",
+    "error",
+    "critical",
+)
 
 
 def test_stdout_version(capsys):
@@ -37,7 +47,7 @@ def test_running_as_module(capsys):
             # being done by __main__ is importing the main entrypoint of the
             # package and running it, so there is nothing to use from this
             # import. As a result, we can safely ignore this warning.
-            # Third-Party Libraries
+            # Project Libraries
             import pdf_access.__main__  # noqa: F401
     captured = capsys.readouterr()
     assert (
