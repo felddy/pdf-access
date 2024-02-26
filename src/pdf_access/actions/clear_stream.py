@@ -6,13 +6,15 @@ from typing import Any, Tuple
 
 # Third-Party Libraries
 import fitz
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from .. import ActionBase
 
 
 class ClearStreamActionArgs(BaseModel):
     """Arguments for the ClearStreamAction."""
+
+    model_config = ConfigDict(extra="forbid")
 
     regex: re.Pattern
 
@@ -28,11 +30,6 @@ class ClearStreamActionArgs(BaseModel):
             raise ValueError(
                 "Unexpected type for 'regex'. Expected 'str' or compiled regex pattern."
             )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
 
 
 class ClearStreamAction(ActionBase):

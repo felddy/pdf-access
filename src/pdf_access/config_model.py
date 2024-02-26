@@ -6,24 +6,23 @@ import re
 from typing import Any, Dict, List
 
 # Third-Party Libraries
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class Action(BaseModel):
     """Definition of an Action configuration."""
 
+    model_config = ConfigDict(extra="forbid")
+
     args: Dict[str, Any] = Field(default_factory=dict)
     function: str
     name: str
 
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
 
 class Plan(BaseModel):
     """Definition of a Plan configuration."""
+
+    model_config = ConfigDict(extra="forbid")
 
     actions: List[Action]
     comment: str = ""
@@ -56,14 +55,11 @@ class Plan(BaseModel):
                 "Unexpected type for 'metadata_search'. Expected 'dict' with 'str' keys and 'str' values."
             )
 
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
 
 class Source(BaseModel):
     """Definition of a Source configuration."""
+
+    model_config = ConfigDict(extra="forbid")
 
     in_path: Path
     out_path: Path
@@ -81,23 +77,15 @@ class Source(BaseModel):
             # Handle other unexpected types, or raise an exception
             raise ValueError("Unexpected type. Expected 'str' or 'Path'.")
 
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
 
 class Config(BaseModel):
     """Definition of the configuration root."""
 
+    model_config = ConfigDict(extra="forbid")
+
     actions: Dict[str, Action]
     plans: Dict[str, Plan]
     sources: Dict[str, Source]
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
 
     @model_validator(mode="before")
     def resolve_actions(cls, values: Dict[str, Any]) -> Dict[str, Any]:

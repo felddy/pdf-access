@@ -5,7 +5,7 @@ from typing import Any, List, Tuple
 
 # Third-Party Libraries
 import fitz
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from .. import ActionBase
 
@@ -13,12 +13,9 @@ from .. import ActionBase
 class KeepPagesActionArgs(BaseModel):
     """Arguments for the KeepPagesAction."""
 
+    model_config = ConfigDict(extra="forbid")
+
     pages: List[int]
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
 
 
 class KeepPagesAction(ActionBase):

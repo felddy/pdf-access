@@ -7,13 +7,21 @@ from typing import Any, Dict, Tuple
 
 # Third-Party Libraries
 import fitz
-from pydantic import BaseModel, ValidationError, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from .. import ActionBase
 
 
 class DetectTextActionArgs(BaseModel):
     """Arguments for the DetectTextAction."""
+
+    model_config = ConfigDict(extra="forbid")
 
     regex: re.Pattern
     stop_if_found: bool = False
@@ -40,11 +48,6 @@ class DetectTextActionArgs(BaseModel):
                 "At least one of 'stop_if_found' or 'stop_if_not_found' must be True"
             )
         return values
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
 
 
 class DetectTextAction(ActionBase):

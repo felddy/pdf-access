@@ -6,7 +6,7 @@ from typing import Any, Tuple
 
 # Third-Party Libraries
 import fitz
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from .. import ActionBase
 
@@ -14,11 +14,9 @@ from .. import ActionBase
 class ClearEncodingDifferencesActionArgs(BaseModel):
     """Arguments for the ClearEncodingDifferencesAction."""
 
-    # No arguments are needed for this action.
-    class Config:
-        """Pydantic configuration."""
+    model_config = ConfigDict(extra="forbid")
 
-        extra = "forbid"
+    # No arguments are needed for this action.
 
 
 class ClearEncodingDifferencesAction(ActionBase):

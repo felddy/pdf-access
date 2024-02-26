@@ -7,13 +7,15 @@ from typing import Any, List, Tuple
 
 # Third-Party Libraries
 import fitz
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from .. import ActionBase
 
 
 class GatedRegexActionArgs(BaseModel):
     """Arguments for the GatedRegexAction."""
+
+    model_config = ConfigDict(extra="forbid")
 
     gate_re: re.Pattern
     clear_res: List[re.Pattern]
@@ -42,11 +44,6 @@ class GatedRegexActionArgs(BaseModel):
             raise ValueError(
                 "Unexpected type for 'regex'. Expected a list of strings or compiled regular expressions."
             )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
 
 
 class GatedRegexAction(ActionBase):
