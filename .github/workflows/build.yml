@@ -47,7 +47,7 @@ jobs:
       - id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       # We need the Go version and Go cache location for the actions/cache step,
       # so the Go installation must happen before that.
       - id: setup-go
@@ -155,15 +155,8 @@ jobs:
         os:
           - ubuntu-latest
         python-version:
-          - "3.7"
-          - "3.8"
-          - "3.9"
-          - "3.10"
           - "3.11"
           - "3.12"
-        include:
-          - os: ubuntu-20.04
-            python-version: "3.6"
     steps:
       - id: harden-runner
         name: Harden the runner
@@ -224,7 +217,7 @@ jobs:
       - id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       - uses: actions/cache@v3
         env:
           BASE_CACHE_KEY: "${{ github.job }}-${{ runner.os }}-\
@@ -264,15 +257,8 @@ jobs:
         os:
           - ubuntu-latest
         python-version:
-          - "3.7"
-          - "3.8"
-          - "3.9"
-          - "3.10"
           - "3.11"
           - "3.12"
-        include:
-          - os: ubuntu-20.04
-            python-version: "3.6"
     steps:
       - id: harden-runner
         name: Harden the runner
@@ -324,15 +310,8 @@ jobs:
         os:
           - ubuntu-latest
         python-version:
-          - "3.7"
-          - "3.8"
-          - "3.9"
-          - "3.10"
           - "3.11"
           - "3.12"
-        include:
-          - os: ubuntu-20.04
-            python-version: "3.6"
     steps:
       - id: harden-runner
         name: Harden the runner
