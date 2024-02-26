@@ -1,5 +1,4 @@
-"""PDF Access Python library and tool.
-"""
+"""PDF Access Python library tool entrypoint."""
 
 # Standard Python Libraries
 import argparse
@@ -46,7 +45,7 @@ def read_config(config_file: str) -> Config:
 
 
 def get_registries():
-    # Discover and register the actions
+    """Discover and register the actions."""
     action_registry: dict[str, type[ActionBase]] = discover_and_register(
         "actions", ActionBase
     )
@@ -61,10 +60,14 @@ def get_registries():
 
 
 class PrintConfTable(argparse.Action):
+    """Argparse action to print the action and post-process tables and exit."""
+
     def __init__(self, option_strings, dest, nargs=0, **kwargs):
+        """Initialize the action."""
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        """Print the action and post-process tables and exit."""
         console = Console()
         action_registry, post_process_registry = get_registries()
 

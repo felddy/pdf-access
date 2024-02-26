@@ -1,3 +1,5 @@
+"""Model definitions for the configuration."""
+
 # Standard Python Libraries
 from pathlib import Path
 import re
@@ -8,15 +10,21 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class Action(BaseModel):
+    """Definition of an Action configuration."""
+
     args: Dict[str, Any] = Field(default_factory=dict)
     function: str
     name: str
 
     class Config:
+        """Pydantic configuration."""
+
         extra = "forbid"
 
 
 class Plan(BaseModel):
+    """Definition of a Plan configuration."""
+
     actions: List[Action]
     comment: str = ""
     metadata_search: Dict[str, re.Pattern]
@@ -26,6 +34,7 @@ class Plan(BaseModel):
 
     @field_validator("path_regex", mode="before")
     def compile_path_regex(cls, value: Any) -> re.Pattern[str]:
+        """Compile the path regex."""
         if isinstance(value, str):
             return re.compile(value)
         elif isinstance(value, re.Pattern):
@@ -38,6 +47,7 @@ class Plan(BaseModel):
 
     @field_validator("metadata_search", mode="before")
     def compile_metadata_regexes(cls, value: Any) -> Dict[str, re.Pattern[str]]:
+        """Compile the metadata regexes."""
         if isinstance(value, dict):
             return {k: re.compile(v) for k, v in value.items()}
         else:
@@ -47,10 +57,14 @@ class Plan(BaseModel):
             )
 
     class Config:
+        """Pydantic configuration."""
+
         extra = "forbid"
 
 
 class Source(BaseModel):
+    """Definition of a Source configuration."""
+
     in_path: Path
     out_path: Path
     out_suffix: str = Field("")
@@ -58,6 +72,7 @@ class Source(BaseModel):
 
     @field_validator("in_path", "out_path", mode="before")
     def compile_path_regex(cls, value: Any) -> Path:
+        """Compile the path regex."""
         if isinstance(value, str):
             return Path(value)
         elif isinstance(value, Path):
@@ -67,19 +82,26 @@ class Source(BaseModel):
             raise ValueError("Unexpected type. Expected 'str' or 'Path'.")
 
     class Config:
+        """Pydantic configuration."""
+
         extra = "forbid"
 
 
 class Config(BaseModel):
+    """Definition of the configuration root."""
+
     actions: Dict[str, Action]
     plans: Dict[str, Plan]
     sources: Dict[str, Source]
 
     class Config:
+        """Pydantic configuration."""
+
         extra = "forbid"
 
     @model_validator(mode="before")
     def resolve_actions(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """Resolve named references."""
         # Extract actions and plans from the values dictionary
         actions_dict = values.get("actions", {})
         plans_dict = values.get("plans", {})

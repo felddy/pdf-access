@@ -1,3 +1,5 @@
+"""Action to clear stream objects matching a regular expression, but only if a gate regex matches."""
+
 # Standard Python Libraries
 import logging
 import re
@@ -11,11 +13,14 @@ from .. import ActionBase
 
 
 class GatedRegexActionArgs(BaseModel):
+    """Arguments for the GatedRegexAction."""
+
     gate_re: re.Pattern
     clear_res: List[re.Pattern]
 
     @field_validator("gate_re", mode="before")
     def compile_gate_re(cls, value: Any) -> re.Pattern[bytes]:
+        """Compile the regex pattern."""
         if isinstance(value, str):
             return re.compile(value.encode())
         elif isinstance(value, re.Pattern):
@@ -29,6 +34,7 @@ class GatedRegexActionArgs(BaseModel):
     @field_validator("clear_res", mode="before")
     @classmethod
     def compile_clear_regexes(cls, value: Any) -> List[re.Pattern[bytes]]:
+        """Compile the regex patterns."""
         if isinstance(value, list):
             return [re.compile(v.encode()) for v in value]
         else:
@@ -38,6 +44,8 @@ class GatedRegexActionArgs(BaseModel):
             )
 
     class Config:
+        """Pydantic configuration."""
+
         extra = "forbid"
 
 
@@ -48,6 +56,15 @@ class GatedRegexAction(ActionBase):
 
     @classmethod
     def apply(cls, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:
+        """Clear stream objects matching a regular expression, but only if a gate regex matches.
+
+        Args:
+            doc: The document to modify.
+            **kwargs: The arguments for the action.
+
+        Returns:
+            A tuple containing the number of changes made and a boolean indicating if processing should continue.
+        """
         try:
             args = GatedRegexActionArgs(**kwargs)
         except ValidationError as e:

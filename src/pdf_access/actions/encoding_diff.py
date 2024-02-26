@@ -1,3 +1,5 @@
+"""Action to clear differences in encoding objects."""
+
 # Standard Python Libraries
 import logging
 from typing import Any, Tuple
@@ -10,8 +12,12 @@ from .. import ActionBase
 
 
 class ClearEncodingDifferencesActionArgs(BaseModel):
-    # No fields
+    """Arguments for the ClearEncodingDifferencesAction."""
+
+    # No arguments are needed for this action.
     class Config:
+        """Pydantic configuration."""
+
         extra = "forbid"
 
 
@@ -22,6 +28,15 @@ class ClearEncodingDifferencesAction(ActionBase):
 
     @classmethod
     def apply(cls, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:
+        """Clear differences in encoding objects.
+
+        Args:
+            doc: The document to modify.
+            **kwargs: The arguments for the action.
+
+        Returns:
+            A tuple containing the number of changes made and a boolean indicating if processing should continue.
+        """
         try:
             ClearEncodingDifferencesActionArgs(**kwargs)
         except ValidationError as e:

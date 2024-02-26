@@ -1,3 +1,5 @@
+"""Post-process a PDF using Ghostscript to compress it."""
+
 # Standard Python Libraries
 import logging
 from pathlib import Path
@@ -18,7 +20,13 @@ class GSCompressProcess(PostProcessBase):
     nice_name = "gs-compress"
 
     @classmethod
-    def apply(self, in_path: Path, out_path: Path, **kwargs) -> None:
+    def apply(self, in_path: Path, out_path: Path) -> None:
+        """Compress a PDF using Ghostscript.
+
+        Args:
+            in_path: Path to the original document.
+            out_path: Path to the modified document.
+        """
         # save meta-data
         with fitz.open(in_path) as doc:
             saved_metadata = doc.metadata

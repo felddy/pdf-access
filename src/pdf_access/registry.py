@@ -1,3 +1,5 @@
+"""Registry for discovering and registering classes in a module."""
+
 # Standard Python Libraries
 import importlib
 from pathlib import Path
@@ -12,8 +14,8 @@ T = TypeVar("T", bound=NiceBase)
 def discover_and_register(
     module: str, clazz: Type[T], base_path: Optional[Path] = None
 ) -> Dict[str, Type[T]]:
+    """Discover and register classes in a module."""
     registry: Dict[str, Type[T]] = {}
-
     # Path to the directory containing modules
     if base_path is None:
         base_path = Path(__file__).resolve().parent

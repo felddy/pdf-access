@@ -1,3 +1,5 @@
+"""Process PDF files according to a configuration."""
+
 # Standard Python Libraries
 import logging
 from pathlib import Path
@@ -15,6 +17,7 @@ from . import ActionBase, Config, Plan, PostProcessBase, Source
 
 
 def verify_paths(in_path: Path, out_path: Path) -> bool:
+    """Verify that the input and output paths exist."""
     if not in_path.exists():
         logging.error("Input path does not exist: %s", in_path)
         return False
@@ -41,6 +44,7 @@ def do_authentication(doc: fitz.Document, plans: Dict[str, Plan]) -> bool:
 
 
 def select_plans_for_source(source: Source, plans: Dict[str, Plan]) -> Dict[str, Plan]:
+    """Select the plans that are in scope for this source."""
     # If the source defines plans, use them; otherwise, use all
     if len(source.plans) == 0:
         logging.debug("All plans are in scope for this source")
@@ -111,8 +115,15 @@ def apply_actions(
 ) -> bool:
     """Apply the actions from the plan to the document.
 
-    Returns True processing should continue.
-    Returns False if processing should stop."""
+    Args:
+        doc: The document to modify.
+        plan: The plan to apply.
+        action_registry: The registry of actions.
+
+    Returns:
+        True processing should continue.
+        False if processing should stop.
+    """
     # Get the list of actions for this plan
     for action in plan.actions:
         if not (action_function := action_registry.get(action.function)):
@@ -187,6 +198,15 @@ def apply_post_processing(
     plan: Plan,
     post_process_registry: Dict[str, type[PostProcessBase]],
 ):
+    """Apply the post-processing to the output file.
+
+    Args:
+        in_file: The input file.
+        out_file: The output file.
+        plan: The plan that was applied.
+        post_process_registry: The registry of post-processors.
+
+    """
     # loop through post-processors
     for post_processor_name in plan.post_process:
         if not (post_processor := post_process_registry.get(post_processor_name)):
@@ -200,7 +220,7 @@ def apply_post_processing(
 
 
 def size_report(in_path: Path, out_path: Path):
-    # report the change in size with humanize
+    """Report the change in size of the files."""
     in_size = in_path.stat().st_size
     out_size = out_path.stat().st_size
     percent = (out_size - in_size) / in_size * 100.0
@@ -222,7 +242,6 @@ def process(
     force: bool = False,
 ) -> None:
     """Process the PDF files according to the configuration."""
-
     logging.debug(
         "%s source%s found: %s",
         len(config.sources),

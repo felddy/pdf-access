@@ -1,3 +1,5 @@
+"""Action to clear stream objects matching a regular expression."""
+
 # Standard Python Libraries
 import re
 from typing import Any, Tuple
@@ -10,10 +12,13 @@ from .. import ActionBase
 
 
 class ClearStreamActionArgs(BaseModel):
+    """Arguments for the ClearStreamAction."""
+
     regex: re.Pattern
 
     @field_validator("regex", mode="before")
     def compile_path_regex(cls, value: Any) -> re.Pattern[bytes]:
+        """Compile the regex pattern."""
         if isinstance(value, str):
             return re.compile(value.encode())
         elif isinstance(value, re.Pattern):
@@ -25,6 +30,8 @@ class ClearStreamActionArgs(BaseModel):
             )
 
     class Config:
+        """Pydantic configuration."""
+
         extra = "forbid"
 
 
@@ -35,6 +42,15 @@ class ClearStreamAction(ActionBase):
 
     @classmethod
     def apply(cls, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:
+        """Clear stream objects matching a regular expression.
+
+        Args:
+            doc: The document to modify.
+            **kwargs: The arguments for the action.
+
+        Returns:
+            A tuple containing the number of changes made and a boolean indicating if processing should continue.
+        """
         try:
             args = ClearStreamActionArgs(**kwargs)
         except ValidationError as e:

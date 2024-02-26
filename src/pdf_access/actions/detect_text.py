@@ -1,3 +1,5 @@
+"""Action to detect text in pages and metadata matching a regular expression."""
+
 # Standard Python Libraries
 import logging
 import re
@@ -11,12 +13,15 @@ from .. import ActionBase
 
 
 class DetectTextActionArgs(BaseModel):
+    """Arguments for the DetectTextAction."""
+
     regex: re.Pattern
     stop_if_found: bool = False
     stop_if_not_found: bool = False
 
     @field_validator("regex", mode="before")
     def compile_path_regex(cls, value: Any) -> re.Pattern[str]:
+        """Compile the regex pattern."""
         if isinstance(value, str):
             return re.compile(value)
         elif isinstance(value, re.Pattern):
@@ -29,6 +34,7 @@ class DetectTextActionArgs(BaseModel):
 
     @model_validator(mode="before")
     def check_bools(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """Check that at least one of 'stop_if_found' or 'stop_if_not_found' is True."""
         if not values.get("stop_if_found") and not values.get("stop_if_not_found"):
             raise ValueError(
                 "At least one of 'stop_if_found' or 'stop_if_not_found' must be True"
@@ -36,6 +42,8 @@ class DetectTextActionArgs(BaseModel):
         return values
 
     class Config:
+        """Pydantic configuration."""
+
         extra = "forbid"
 
 
@@ -46,6 +54,15 @@ class DetectTextAction(ActionBase):
 
     @classmethod
     def apply(cls, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:
+        """Detect text in pages and metadata matching a regular expression.
+
+        Args:
+            doc: The document to modify.
+            **kwargs: The arguments for the action.
+
+        Returns:
+            A tuple containing the number of changes made and a boolean indicating if processing should continue.
+        """
         try:
             args = DetectTextActionArgs(**kwargs)
         except ValidationError as e:
