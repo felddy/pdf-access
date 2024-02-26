@@ -38,7 +38,7 @@ class ClearStreamActionArgs(BaseModel):
 class ClearStreamAction(ActionBase):
     """Clear stream objects matching a regular expression."""
 
-    nice_name = "clear-stream"
+    registry_id = "clear-stream"
 
     @classmethod
     def apply(cls, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:

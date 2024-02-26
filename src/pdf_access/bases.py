@@ -8,18 +8,18 @@ from typing import Any, Tuple
 import fitz
 
 
-class NiceBase:
+class Registrable:
     """Base class to allow registration of a class in a registry."""
 
-    nice_name: str
+    registry_id: str
 
     @classmethod
     def register(cls) -> str:
         """Register the class with the system."""
-        return cls.nice_name
+        return cls.registry_id
 
 
-class PostProcessBase(NiceBase):
+class PostProcessBase(Registrable):
     """Base class for post-processors."""
 
     @classmethod
@@ -35,7 +35,7 @@ class PostProcessBase(NiceBase):
         )
 
 
-class ActionBase(NiceBase):
+class ActionBase(Registrable):
     """Base class for actions."""
 
     @classmethod

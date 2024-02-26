@@ -52,7 +52,7 @@ class GatedRegexActionArgs(BaseModel):
 class GatedRegexAction(ActionBase):
     """Clear stream objects matching a regular expression, but only if a gate regex matches."""
 
-    nice_name = "gated-regex"
+    registry_id = "gated-regex"
 
     @classmethod
     def apply(cls, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:

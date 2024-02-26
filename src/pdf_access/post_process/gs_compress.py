@@ -17,7 +17,7 @@ from .. import PostProcessBase
 class GSCompressProcess(PostProcessBase):
     """Compress a PDF using Ghostscript."""
 
-    nice_name = "gs-compress"
+    registry_id = "gs-compress"
 
     @classmethod
     def apply(self, in_path: Path, out_path: Path) -> None:
@@ -36,20 +36,22 @@ class GSCompressProcess(PostProcessBase):
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = Path(temp_dir) / out_path.name
             # care has been taken to ensure paths to gs are sanitized
-            cp: CompletedProcess = run(  # nosec start_process_with_partial_path, subprocess_without_shell_equals_true
-                [
-                    "gs",
-                    "-DQUIET",
-                    "-dNOPAUSE",
-                    "-dBATCH",
-                    "-sDEVICE=pdfwrite",
-                    "-dKeepInfo",
-                    "-sOutputFile=" + str(temp_file),
-                    "-f",
-                    out_path,
-                ],
-                stdout=PIPE,  # Capture standard output
-                stderr=STDOUT,  # Redirect standard error to standard output
+            cp: CompletedProcess = (
+                run(  # nosec start_process_with_partial_path, subprocess_without_shell_equals_true
+                    [
+                        "gs",
+                        "-DQUIET",
+                        "-dNOPAUSE",
+                        "-dBATCH",
+                        "-sDEVICE=pdfwrite",
+                        "-dKeepInfo",
+                        "-sOutputFile=" + str(temp_file),
+                        "-f",
+                        out_path,
+                    ],
+                    stdout=PIPE,  # Capture standard output
+                    stderr=STDOUT,  # Redirect standard error to standard output
+                )
             )
             logging.debug("Ghostscript output:\n%s", cp.stdout.decode())
             if cp.returncode:

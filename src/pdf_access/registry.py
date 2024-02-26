@@ -6,9 +6,9 @@ from pathlib import Path
 import pkgutil
 from typing import Dict, Optional, Type, TypeVar
 
-from . import NiceBase
+from . import Registrable
 
-T = TypeVar("T", bound=NiceBase)
+T = TypeVar("T", bound=Registrable)
 
 
 def discover_and_register(

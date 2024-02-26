@@ -24,7 +24,7 @@ class ClearEncodingDifferencesActionArgs(BaseModel):
 class ClearEncodingDifferencesAction(ActionBase):
     """Clear differences in encoding objects."""
 
-    nice_name = "clear-encoding-differences"
+    registry_id = "clear-encoding-differences"
 
     @classmethod
     def apply(cls, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:

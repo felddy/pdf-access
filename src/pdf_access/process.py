@@ -134,7 +134,7 @@ def apply_actions(
         logging.info('Running action: "%s"', action.name)
         logging.debug(
             'Calling action "%s" with: %s, %s',
-            action_function.nice_name,
+            action_function.registry_id,
             doc,
             action.args,
         )
@@ -215,7 +215,7 @@ def apply_post_processing(
                 post_processor_name,
             )
             continue
-        logging.info('Applying post-processor: "%s"', post_processor.nice_name)
+        logging.info('Applying post-processor: "%s"', post_processor.registry_id)
         post_processor.apply(in_path=in_file, out_path=out_file)
 
 

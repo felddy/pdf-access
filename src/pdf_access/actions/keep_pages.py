@@ -24,7 +24,7 @@ class KeepPagesActionArgs(BaseModel):
 class KeepPagesAction(ActionBase):
     """Keep only the specified pages."""
 
-    nice_name = "keep-pages"
+    registry_id = "keep-pages"
 
     @classmethod
     def apply(cls, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:

@@ -50,7 +50,7 @@ class DetectTextActionArgs(BaseModel):
 class DetectTextAction(ActionBase):
     """Detect text in pages and metadata matching a regular expression."""
 
-    nice_name = "detect-text"
+    registry_id = "detect-text"
 
     @classmethod
     def apply(cls, doc: fitz.Document, **kwargs: Any) -> Tuple[int, bool]:
