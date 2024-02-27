@@ -5,20 +5,65 @@
 [![Coverage Status](https://coveralls.io/repos/github/cisagov/pdf-access/badge.svg?branch=develop)](https://coveralls.io/github/cisagov/pdf-access?branch=develop)
 [![Known Vulnerabilities](https://snyk.io/test/github/cisagov/pdf-access/develop/badge.svg)](https://snyk.io/test/github/cisagov/pdf-access)
 
-This is a generic skeleton project that can be used to quickly get a
-new [cisagov](https://github.com/cisagov) Python library GitHub
-project started.  This skeleton project contains [licensing
-information](LICENSE), as well as
-[pre-commit hooks](https://pre-commit.com) and
-[GitHub Actions](https://github.com/features/actions) configurations
-appropriate for a Python library project.
+pdf-access makes pdf documents more accessible to screen readers and other
+assistive technologies.
 
-## New Repositories from a Skeleton ##
+It uses a toml configuration file to specify a plan, match certain documents,
+and apply a list of actions to remediate a document.
 
-Please see our [Project Setup guide](https://github.com/cisagov/development-guide/tree/develop/project_setup)
-for step-by-step instructions on how to start a new repository from
-a skeleton. This will save you time and effort when configuring a
-new repository!
+Here is an example of a toml file that will unlock and remove text that is
+preventing a screen reader from reading the documents authored by Mom.
+
+Other documents will be trimmed down to a single page compressed.
+
+```toml
+#----------------- Sources -----------------
+
+[sources.my_pdfs]
+in_path = "./originals"
+out_path = "./accessible"
+
+#----------------- Plans -------------------
+
+[plans.unlock-compress]
+actions = ["clear_encoding_differences"]
+# match documents from Mom
+metadata_search = { "author" = "Mom" }
+passwords = ["c@11-y0ur-m0+h3r", "w3@r-c13@n-und3rw34r"]
+post_process = ["gs-compress"]
+
+[plans.compress-and-trim]
+actions = ["single-page"]
+# match everything else
+metadata_search = {}
+post_process = ["gs-compress"]
+
+#----------------- Actions -----------------
+
+[actions.clear_encoding_differences]
+name = "Clear encoding differences"
+function = "clear-encoding-differences"
+
+[actions.single-page]
+name = "Keep one page"
+function = "keep-pages"
+args.pages = [0]
+```
+
+To run the plan, you would use the following command:
+
+```bash
+pdf-access config.toml
+```
+
+The files in the `./originals` directory would be processed and the results
+would be placed in the `./accessible` directory.
+
+## Installation ##
+
+```bash
+pip install git+https://github.com/felddy/pdf-access.git
+```
 
 ## Contributing ##
 
