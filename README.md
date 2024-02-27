@@ -1,9 +1,8 @@
 # pdf-access #
 
-[![GitHub Build Status](https://github.com/cisagov/pdf-access/workflows/build/badge.svg)](https://github.com/cisagov/pdf-access/actions)
-[![CodeQL](https://github.com/cisagov/pdf-access/workflows/CodeQL/badge.svg)](https://github.com/cisagov/pdf-access/actions/workflows/codeql-analysis.yml)
-[![Coverage Status](https://coveralls.io/repos/github/cisagov/pdf-access/badge.svg?branch=develop)](https://coveralls.io/github/cisagov/pdf-access?branch=develop)
-[![Known Vulnerabilities](https://snyk.io/test/github/cisagov/pdf-access/develop/badge.svg)](https://snyk.io/test/github/cisagov/pdf-access)
+[![GitHub Build Status](https://github.com/felddy/pdf-access/workflows/build/badge.svg)](https://github.com/felddy/pdf-access/actions)
+[![CodeQL](https://github.com/felddy/pdf-access/workflows/CodeQL/badge.svg)](https://github.com/felddy/pdf-access/actions/workflows/codeql-analysis.yml)
+[![Coverage Status](https://coveralls.io/repos/github/felddy/pdf-access/badge.svg?branch=develop)](https://coveralls.io/github/felddy/pdf-access?branch=develop)
 
 pdf-access makes pdf documents more accessible to screen readers and other
 assistive technologies.
