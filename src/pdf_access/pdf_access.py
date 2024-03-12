@@ -44,7 +44,9 @@ def read_config(config_file: str) -> Config:
         sys.exit(1)
 
 
-def get_registries():
+def get_registries() -> (
+    tuple[dict[str, type[ActionBase]], dict[str, type[PostProcessBase]]]
+):
     """Discover and register the actions."""
     action_registry: dict[str, type[ActionBase]] = discover_and_register(
         "actions", ActionBase
