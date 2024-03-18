@@ -40,7 +40,7 @@ class DeleteTrailerIDAction(ActionBase):
         try:
             DeleteTrailerIDActionArgs(**kwargs)
         except ValidationError as e:
-            print(f"Error validating arguments: {e}")
+            logging.error("Error validating arguments: %s", e)
             return (0, False)
         change_count = 0
         trailer_keys = doc.xref_get_keys(PDF_TRAILER_XREF)

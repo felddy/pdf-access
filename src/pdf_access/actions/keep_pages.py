@@ -1,6 +1,7 @@
 """Action to keep only the specified pages."""
 
 # Standard Python Libraries
+import logging
 from typing import Any, List, Tuple
 
 # Third-Party Libraries
@@ -37,7 +38,7 @@ class KeepPagesAction(ActionBase):
         try:
             args = KeepPagesActionArgs(**kwargs)
         except ValidationError as e:
-            print(f"Error validating arguments: {e}")
+            logging.error("Error validating arguments: %s", e)
             return (0, False)
         doc.select(args.pages)
         return (1, True)
