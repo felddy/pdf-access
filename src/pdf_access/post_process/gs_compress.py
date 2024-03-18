@@ -40,7 +40,6 @@ class GSCompressProcess(PostProcessBase):
             # Set up the command and arguments for the subprocess
             command: list[str] = [
                 "gs",
-                "-DQUIET",
                 "-dNOPAUSE",
                 "-dBATCH",
                 "-sDEVICE=pdfwrite",
