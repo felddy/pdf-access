@@ -1,5 +1,5 @@
 """
-This is the setup module for the example project.
+This is the setup module for the PDF Access project.
 
 Based on:
 
@@ -42,23 +42,22 @@ def get_version(version_file):
 
 
 setup(
-    name="example",
+    name="pdf-access",
     # Versions should comply with PEP440
-    version=get_version("src/example/_version.py"),
-    description="Example Python library",
+    version=get_version("src/pdf_access/_version.py"),
+    description="PDF Access Python library",
     long_description=readme(),
     long_description_content_type="text/markdown",
-    # Landing page for CISA's cybersecurity mission
-    url="https://www.cisa.gov/cybersecurity",
+    url="https://github.com/felddy/pdf-access",
     # Additional URLs for this project per
     # https://packaging.python.org/guides/distributing-packages-using-setuptools/#project-urls
     project_urls={
-        "Source": "https://github.com/cisagov/pdf-access",
-        "Tracker": "https://github.com/cisagov/pdf-access/issues",
+        "Source": "https://github.com/felddy/pdf-access",
+        "Tracker": "https://github.com/felddy/pdf-access/issues",
     },
     # Author details
-    author="Cybersecurity and Infrastructure Security Agency",
-    author_email="github@cisa.dhs.gov",
+    author="Mark Feldhousen",
+    author_email="markf+github@geekpad.com",
     license="License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -75,24 +74,25 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.11",
     # What does your project relate to?
-    keywords="skeleton",
+    keywords="pdf",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    package_data={"example": ["data/*.txt"]},
+    package_data={},
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     include_package_data=True,
-    install_requires=["docopt", "schema", "setuptools >= 24.2.0"],
+    install_requires=[
+        "humanize",
+        "pydantic",
+        "PyMuPDF",
+        "rich",
+        "setuptools >= 24.2.0",
+    ],
     extras_require={
         "test": [
             "coverage",
@@ -108,6 +108,6 @@ setup(
             "pytest",
         ]
     },
-    # Conveniently allows one to run the CLI tool as `example`
-    entry_points={"console_scripts": ["example = example.example:main"]},
+    # Conveniently allows one to run the CLI tool as `pdf-access`
+    entry_points={"console_scripts": ["pdf-access = pdf_access.pdf_access:main"]},
 )
