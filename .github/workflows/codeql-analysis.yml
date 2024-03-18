@@ -19,6 +19,9 @@ on:
   schedule:
     - cron: '0 14 * * 6'
 
+permissions:
+  contents: read
+
 jobs:
   diagnostics:
     name: Run diagnostics
@@ -28,15 +31,15 @@ jobs:
       # each job.
       - id: harden-runner
         name: Harden the runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142  # tag=v2.7.0
         with:
           egress-policy: audit
       - id: github-status
         name: Check GitHub status
-        uses: crazy-max/ghaction-github-status@v3
+        uses: crazy-max/ghaction-github-status@f947abedefc0d01e4bae344bd7061897ae4e6de9  # tag=v3.2.0
       - id: dump-context
         name: Dump context
-        uses: crazy-max/ghaction-dump-context@v2
+        uses: crazy-max/ghaction-dump-context@fc6f6179f2c41d2ea976b81b79a947393c3a02d9  # tag=v2.2.0
   analyze:
     name: Analyze
     needs:
@@ -58,16 +61,16 @@ jobs:
     steps:
       - id: harden-runner
         name: Harden the runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142  # tag=v2.7.0
         with:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # tag=v4.1.1
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@3ab4101902695724f9365a384f86c1074d94e18c  # tag=v3.24.7
         with:
           languages: ${{ matrix.language }}
 
@@ -75,7 +78,7 @@ jobs:
       # Java). If this step fails, then you should remove it and run the build
       # manually (see below).
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@3ab4101902695724f9365a384f86c1074d94e18c  # tag=v3.24.7
 
       # ℹ️ Command-line programs to run using the OS shell.
       # 📚 https://git.io/JvXDl
@@ -89,4 +92,4 @@ jobs:
       #     make release
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@3ab4101902695724f9365a384f86c1074d94e18c  # tag=v3.24.7
