@@ -1,3 +1,4 @@
+---
 # Dependency Review Action
 #
 # This Action will scan dependency manifest files that change as part of a Pull Request,
@@ -17,11 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142  # tag=v2.7.0
         with:
           egress-policy: audit
 
       - name: 'Checkout Repository'
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744  # tag=v3.6.0
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@0efb1d1d84fc9633afcdaad14c485cbbc90ef46c # v2.5.1
+        uses: actions/dependency-review-action@0efb1d1d84fc9633afcdaad14c485cbbc90ef46c  # tag=v2.5.1
