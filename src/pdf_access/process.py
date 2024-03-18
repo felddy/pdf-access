@@ -174,7 +174,7 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
             javascript=True,
             metadata=False,
             redactions=True,
-            redact_images=0,
+            redact_images=False,
             remove_links=True,
             reset_fields=True,
             reset_responses=False,  # causes seg-fault
@@ -189,6 +189,7 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
             deflate=True,
             garbage=4,
             linear=True,
+            no_new_id=True,
         )
 
 
@@ -224,7 +225,8 @@ def size_report(in_path: Path, out_path: Path):
     in_size = in_path.stat().st_size
     out_size = out_path.stat().st_size
     percent = (out_size - in_size) / in_size * 100.0
-    logging.info(
+    log_function = logging.info if percent < 0 else logging.warn
+    log_function(
         "Size change: %s -> %s (%s) %.2f%%",
         humanize.naturalsize(in_size, binary=True),
         humanize.naturalsize(out_size, binary=True),

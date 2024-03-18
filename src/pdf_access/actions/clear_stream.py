@@ -1,6 +1,7 @@
 """Action to clear stream objects matching a regular expression."""
 
 # Standard Python Libraries
+import logging
 import re
 from typing import Any, Tuple
 
@@ -51,7 +52,7 @@ class ClearStreamAction(ActionBase):
         try:
             args = ClearStreamActionArgs(**kwargs)
         except ValidationError as e:
-            print(f"Error validating arguments: {e}")
+            logging.error("Error validating arguments: %s", e)
             return (0, False)
         change_count = 0
         for xref_num in range(1, doc.xref_length()):

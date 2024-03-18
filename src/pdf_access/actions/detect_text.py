@@ -69,7 +69,7 @@ class DetectTextAction(ActionBase):
         try:
             args = DetectTextActionArgs(**kwargs)
         except ValidationError as e:
-            print(f"Error validating arguments: {e}")
+            logging.error("Error validating arguments: %s", e)
             return (0, False)
         found_text: bool = False
         # Search text on pages
