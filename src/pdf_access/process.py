@@ -174,7 +174,7 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
             javascript=True,
             metadata=False,
             redactions=True,
-            redact_images=0,
+            redact_images=False,
             remove_links=True,
             reset_fields=True,
             reset_responses=False,  # causes seg-fault
@@ -189,6 +189,7 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
             deflate=True,
             garbage=4,
             linear=True,
+            no_new_id=True,
         )
 
 
