@@ -14,8 +14,7 @@ permissions:
 jobs:
   add-remove-label:
     permissions:
-      issues: write  # for dependabot to enable auto-label
-      repository-projects: write  # for dependabot to enable auto-label
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
