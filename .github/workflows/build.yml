@@ -142,7 +142,7 @@ jobs:
       - name: Run pre-commit on all files
         run: pre-commit run --all-files
       - name: Setup tmate debug session
-        uses: mxschmitt/action-tmate@a283f9441d2d96eb62436dc46d7014f5d357ac22  # tag=v3.17
+        uses: mxschmitt/action-tmate@b3db6e16e597d92037c8647e54acc5d2b1b48dee  # tag=v3.18
         if: env.RUN_TMATE
   test:
     name: test source - py${{ matrix.python-version }}
@@ -200,7 +200,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: success()
       - name: Setup tmate debug session
-        uses: mxschmitt/action-tmate@a283f9441d2d96eb62436dc46d7014f5d357ac22  # tag=v3.17
+        uses: mxschmitt/action-tmate@b3db6e16e597d92037c8647e54acc5d2b1b48dee  # tag=v3.18
         if: env.RUN_TMATE
   coveralls-finish:
     runs-on: ubuntu-latest
@@ -242,7 +242,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup tmate debug session
-        uses: mxschmitt/action-tmate@a283f9441d2d96eb62436dc46d7014f5d357ac22  # tag=v3.17
+        uses: mxschmitt/action-tmate@b3db6e16e597d92037c8647e54acc5d2b1b48dee  # tag=v3.18
         if: env.RUN_TMATE
   build:
     name: build wheel - py${{ matrix.python-version }}
@@ -296,7 +296,7 @@ jobs:
           name: dist-${{ matrix.python-version }}
           path: dist
       - name: Setup tmate debug session
-        uses: mxschmitt/action-tmate@a283f9441d2d96eb62436dc46d7014f5d357ac22  # tag=v3.17
+        uses: mxschmitt/action-tmate@b3db6e16e597d92037c8647e54acc5d2b1b48dee  # tag=v3.18
         if: env.RUN_TMATE
   test-build:
     name: test built wheel - py${{ matrix.python-version }}
@@ -354,5 +354,5 @@ jobs:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: pytest
       - name: Setup tmate debug session
-        uses: mxschmitt/action-tmate@a283f9441d2d96eb62436dc46d7014f5d357ac22  # tag=v3.17
+        uses: mxschmitt/action-tmate@b3db6e16e597d92037c8647e54acc5d2b1b48dee  # tag=v3.18
         if: env.RUN_TMATE
