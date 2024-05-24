@@ -177,7 +177,7 @@ def save_pdf(doc: fitz.Document, out_file: Path, debug: bool = False) -> None:
             redact_images=False,
             remove_links=True,
             reset_fields=True,
-            reset_responses=False,  # causes seg-fault
+            reset_responses=False,  # causes seg-fault when set to True
             thumbnails=True,
             xml_metadata=True,
         )
