@@ -22,7 +22,7 @@ class DeleteTrailerIDActionArgs(BaseModel):
 
 
 class DeleteTrailerIDAction(ActionBase):
-    """Clear differences in encoding objects."""
+    """Delete the unique document ID."""
 
     registry_id = "delete-trailer-id"
 
