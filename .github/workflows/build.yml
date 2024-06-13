@@ -42,7 +42,7 @@ jobs:
           egress-policy: audit
       - id: setup-env
         uses: cisagov/setup-env-github-action@7520f7a93c2ae2da6963b64e2ebf7feb9f174f8a  # develop
-      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f  # tag=v4.1.3
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # tag=v4.1.7
       - id: setup-python
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # tag=v5.0.0
         with:
@@ -159,7 +159,7 @@ jobs:
         uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4  # tag=v2.7.1
         with:
           egress-policy: audit
-      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f  # tag=v4.1.3
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # tag=v4.1.7
       - id: setup-python
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # tag=v5.0.0
         with:
@@ -206,7 +206,7 @@ jobs:
         uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4  # tag=v2.7.1
         with:
           egress-policy: audit
-      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f  # tag=v4.1.3
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # tag=v4.1.7
       - id: setup-python
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # tag=v5.0.0
         with:
@@ -255,7 +255,7 @@ jobs:
         uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4  # tag=v2.7.1
         with:
           egress-policy: audit
-      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f  # tag=v4.1.3
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # tag=v4.1.7
       - id: setup-python
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # tag=v5.0.0
         with:
@@ -305,7 +305,7 @@ jobs:
         uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4  # tag=v2.7.1
         with:
           egress-policy: audit
-      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f  # tag=v4.1.3
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # tag=v4.1.7
       - id: setup-python
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # tag=v5.0.0
         with:
