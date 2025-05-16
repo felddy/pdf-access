@@ -56,7 +56,7 @@ jobs:
         with:
           egress-policy: audit
       - id: setup-env
-        uses: cisagov/setup-env-github-action@6e901890ff80cdb05aa9308bebca0875d1e64ebf  # develop
+        uses: cisagov/setup-env-github-action@e4811080ee62deb1ca09fc4413bb3f8b88bfbeb2  # develop
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # tag=v4.2.2
       - id: setup-python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # tag=v5.6.0
